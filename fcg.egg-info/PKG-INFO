@@ -1,0 +1,54 @@
+Metadata-Version: 2.4
+Name: fcg
+Version: 0.1.0
+Summary: Flashcard Generator
+Author-email: Your Name <your.email@example.com>
+License: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: uvicorn[standard]>=0.23.0
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pydantic-settings>=2.0.0
+Requires-Dist: notion-client>=2.0.0
+Requires-Dist: pytest
+Requires-Dist: pytest-asyncio>=0.21.0
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+
+Build both export paths into your app:
+
+POST /add_card → always saves to DB
+
+POST /send_to_notion → for Notion integration (easy + automatic)
+
+GET /anki_deck → for .apkg download (Anki users)
+
+
+Current status - extension sends an empty message to the backend api
+TODO 
+- send correct content - currently, the button is triggered after the use selects some content and passes it to the backend - should the entire page be selected?
+- analyse content and create the flashcard content - done
+    - LLM call
+        - scaffolding should be compatible with ollama (openai spec should be fine) - done via openrouter
+        - using openrouter - cheapest available LLM
+            - what input parameters are expected by the template, the LLM should provide these as output - find the hn article either in notes  - question, answer, id - for nwo
+
+- send flashcard to a users platform
+    - notion page - https://www.notion.com/templates/flashcards
+        - need a secure mechanism to do this for the user
+    - anki card
+
+UPLOAD MVP to github
+
+BUGS
+- flashcard button doesnt appear after i reload - V ANNOYING
+- flashcard button does not go away even though i clicked somewhere else

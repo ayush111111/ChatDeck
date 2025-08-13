@@ -1,0 +1,12 @@
+setup.py
+fcg/fcg.egg-info/PKG-INFO
+fcg/fcg.egg-info/SOURCES.txt
+fcg/fcg.egg-info/dependency_links.txt
+fcg/fcg.egg-info/requires.txt
+fcg/fcg.egg-info/top_level.txt
+fcg/routes/__init__.py
+fcg/tests/__init__.py
+fcg/utils/__init__.py
+fcg/utils/anki.py
+fcg/utils/flashcard_generator.py
+fcg/utils/notion.py
