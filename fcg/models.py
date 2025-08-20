@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 from enum import Enum
 
@@ -19,7 +19,8 @@ class ChatMessage(BaseModel):
         ..., min_length=1, description="Message content cannot be empty"
     )
 
-    @validator("content")
+    @field_validator("content")
+    @classmethod
     def content_must_not_be_whitespace(cls, v):
         if not v.strip():
             raise ValueError("Content cannot be only whitespace")
@@ -41,7 +42,8 @@ class FlashcardRequest(BaseModel):
     )
     destination: DestinationType
 
-    @validator("conversation")
+    @field_validator("conversation")
+    @classmethod
     def conversation_must_have_content(cls, v):
         if not any(msg.content.strip() for msg in v):
             raise ValueError(
@@ -58,7 +60,8 @@ class Flashcard(BaseModel):
     answer: str = Field(..., min_length=1)
     topic: Optional[str] = None
 
-    @validator("question", "answer")
+    @field_validator("question", "answer")
+    @classmethod
     def text_fields_must_not_be_whitespace(cls, v):
         if not v.strip():
             raise ValueError("Field cannot be only whitespace")
