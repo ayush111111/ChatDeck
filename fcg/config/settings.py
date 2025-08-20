@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # OpenRouter API settings
     openrouter_api_key: str
     openrouter_url: str = "https://openrouter.ai/api/v1/chat/completions"
-    openrouter_model: str = "mistralai/mistral-small-3.2-24b-instruct:free"
+    openrouter_model: str = "qwen/qwen3-4b:free"
 
     # Notion API settings
     notion_api_key: Optional[str] = None
@@ -32,6 +32,6 @@ class Settings(BaseSettings):
         env_field_names = {
             "openrouter_api_key": "OPENROUTER_API_KEY",
             "openrouter_url": "OPENROUTER_URL",
-            "notion_api_key": "NOTION_INTERNAL_API_KEY",
+            "notion_api_key": "NOTION_API_KEY",
             "notion_page_id": "NOTION_PAGE_ID",
         }

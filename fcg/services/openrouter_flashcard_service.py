@@ -28,8 +28,19 @@ class OpenRouterFlashcardService(FlashcardGeneratorService):
             llm_response = await self._call_llm_api(prompt)
             flashcards_content = self._extract_content_from_response(llm_response)
 
-            cleaned_json = self._clean_json_string(flashcards_content)
-            generated_cards = json.loads(cleaned_json)
+            # TODO: fix or remove
+            # cleaned_json = self._clean_json_string(flashcards_content)
+            parsed_json = json.loads(flashcards_content)
+
+            # Ensure the JSON contains the "flashcards" field
+            if "flashcards" not in parsed_json or not isinstance(
+                parsed_json["flashcards"], list
+            ):
+                raise ValueError(
+                    "Invalid response format: 'flashcards' field is missing or not a list"
+                )
+
+            generated_cards = parsed_json["flashcards"]
 
             # Add UUIDs and validate structure
             validated_cards = []
@@ -49,7 +60,7 @@ class OpenRouterFlashcardService(FlashcardGeneratorService):
 
     def _create_flashcard_prompt(self, content: str) -> str:
         """Create the prompt for flashcard generation"""
-        return f"""Return ONLY a JSON array of flashcard objects.
+        return f"""Return ONLY a JSON object with a single field called "flashcards" that contains a JSON array of flashcard objects.
 Create flashcards from the following content.
 Each object in the array must have these exact fields:
 {{
@@ -66,17 +77,20 @@ Technical requirements:
 3. No explanation text
 4. No backticks
 5. No code block markers
-6. Just the raw JSON array
-7. Topic should be a single word or short phrase
+6. Just the raw JSON object
+7. The JSON object must have a single field called "flashcards"
+8. Topic should be a single word or short phrase
 
 Example format:
-[
-    {{
-        "question": "What is the capital of France?",
-        "answer": "Paris",
-        "topic": "Geography"
-    }}
-]"""
+{{
+    "flashcards": [
+        {{
+            "question": "What is the capital of France?",
+            "answer": "Paris",
+            "topic": "Geography"
+        }}
+    ]
+}}"""
 
     async def _call_llm_api(self, prompt: str) -> Dict[str, Any]:
         """Make API call to OpenRouter"""
@@ -94,6 +108,7 @@ Example format:
                 },
                 {"role": "user", "content": prompt},
             ],
+            "response_format": {"type": "json_object"},
         }
 
         async with httpx.AsyncClient() as client:

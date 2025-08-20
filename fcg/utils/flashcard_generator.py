@@ -29,47 +29,47 @@ def clean_json_string(text):
 
     # 5. Extract only the JSON array/object part
     # Find the first [ or { and match until the corresponding closing bracket
-    
+
     # Find the start of JSON
     start_match = re.search(r"[\[\{]", text)
     if not start_match:
         return text
-    
+
     start_pos = start_match.start()
     bracket_count = 0
     brace_count = 0
     in_string = False
     escape_next = False
     end_pos = len(text)
-    
+
     for i, char in enumerate(text[start_pos:], start_pos):
         if escape_next:
             escape_next = False
             continue
-            
-        if char == '\\':
+
+        if char == "\\":
             escape_next = True
             continue
-            
+
         if char == '"' and not escape_next:
             in_string = not in_string
             continue
-            
+
         if not in_string:
-            if char == '[':
+            if char == "[":
                 bracket_count += 1
-            elif char == ']':
+            elif char == "]":
                 bracket_count -= 1
-            elif char == '{':
+            elif char == "{":
                 brace_count += 1
-            elif char == '}':
+            elif char == "}":
                 brace_count -= 1
-                
+
             # If we've closed all brackets and braces, we're done
             if bracket_count == 0 and brace_count == 0 and i > start_pos:
                 end_pos = i + 1
                 break
-    
+
     text = text[start_pos:end_pos]
 
     # 6. Fix unescaped quotes in strings (like "Earth"s" -> "Earth's")
@@ -79,7 +79,7 @@ def clean_json_string(text):
         # Replace unescaped quotes with apostrophes
         content = re.sub(r'(?<!\\)"(?![\s]*[,}\]])', "'", content)
         return f'"{content}"'
-    
+
     text = re.sub(r'"([^"]*?)"', fix_quotes_in_strings, text)
 
     # 7. Remove trailing commas
@@ -139,7 +139,7 @@ async def generate_flashcards(conversation: List[ChatMessage]) -> List[dict]:
 
     data = json.dumps(
         {
-            "model": "mistralai/mistral-small-3.2-24b-instruct:free",
+            "model": "qwen/qwen3-4b:free",
             "messages": [
                 {
                     "role": "system",
@@ -159,25 +159,29 @@ async def generate_flashcards(conversation: List[ChatMessage]) -> List[dict]:
             flashcards_content = llm_response["choices"][0]["message"]["content"]
 
             cleaned_json = clean_json_string(flashcards_content)
-            
+
             generated_cards = json.loads(cleaned_json)
-            
+
             # Ensure we have a list of dictionaries
             if isinstance(generated_cards, str):
                 # Try to parse again if it's still a string
                 generated_cards = json.loads(generated_cards)
-            
+
             # If LLM returns a single object instead of array, wrap it in a list
             if isinstance(generated_cards, dict):
                 generated_cards = [generated_cards]
-            
+
             if not isinstance(generated_cards, list):
-                raise ValueError(f"Expected a list of flashcards, got {type(generated_cards)}")
+                raise ValueError(
+                    f"Expected a list of flashcards, got {type(generated_cards)}"
+                )
 
             # Add UUIDs to the flashcards
             for card in generated_cards:
                 if not isinstance(card, dict):
-                    raise ValueError(f"Expected flashcard to be a dict, got {type(card)}")
+                    raise ValueError(
+                        f"Expected flashcard to be a dict, got {type(card)}"
+                    )
                 card["id"] = str(uuid.uuid4())
 
             return generated_cards
