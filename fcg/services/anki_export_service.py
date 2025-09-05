@@ -53,7 +53,8 @@ class AnkiExportService(ExportService):
         }
 
         # Add topic as tag if provided
-        if topic := card.get("topic"):
+        topic = card.get("topic")
+        if topic:
             note["tags"].append(topic.replace(" ", "_"))
 
         # Add general tag
