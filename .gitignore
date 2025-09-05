@@ -1,2 +1,18 @@
 .env
 *.pyc
+# Python cache and metadata
+__pycache__/
+fcg.egg-info/
+
+# VS Code settings
+.vscode/
+
+# Environment lock and virtual env
+uv.lock
+.venv/
+
+# Test and local data files (optional)
+*.sqlite3
+*.db
+*.log
+*.tmp
