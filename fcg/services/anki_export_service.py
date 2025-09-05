@@ -4,6 +4,7 @@ import urllib.error
 import uuid
 from typing import List, Dict, Any
 from fcg.interfaces.export_service import ExportService
+from fcg.utils.logging import logger
 
 
 class AnkiExportService(ExportService):
@@ -31,7 +32,7 @@ class AnkiExportService(ExportService):
                     self._create_anki_note(deck_name, card)
                     cards_added += 1
                 except Exception as e:
-                    print(
+                    logger.error(
                         f"Failed to add card: {card.get('question', 'Unknown')}, Error: {e}"
                     )
 
