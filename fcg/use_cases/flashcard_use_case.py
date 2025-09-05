@@ -72,6 +72,15 @@ class FlashcardUseCase:
         """Export flashcards to Anki format"""
         try:
             export_service = self.container.get(ExportService)
+
+            # Check AnkiConnect availability before exporting
+            if hasattr(export_service, "_is_anki_connect_available"):
+                if not export_service._is_anki_connect_available():
+                    return FlashcardResponse(
+                        status="error",
+                        message="AnkiConnect is not available. Please start Anki with AnkiConnect installed.",
+                    )
+
             file_path = export_service.export_flashcards(flashcards)
 
             return FlashcardResponse(

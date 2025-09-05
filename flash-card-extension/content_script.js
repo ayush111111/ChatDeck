@@ -43,7 +43,7 @@ const createButton = () => {
     fetch('http://localhost:8000/flashcards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conversation, destination: 'notion' })
+      body: JSON.stringify({ conversation, destination: 'anki' })
     })
       .then(() => alert('Full conversation sent!'))
       .catch(err => console.error('Error sending flashcard:', err));
