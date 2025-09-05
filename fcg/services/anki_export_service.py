@@ -1,5 +1,6 @@
 import json
-import urllib.request, urllib.error
+import urllib.request
+import urllib.error
 import uuid
 from typing import List, Dict, Any
 from fcg.interfaces.export_service import ExportService
