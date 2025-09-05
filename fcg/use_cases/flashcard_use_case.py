@@ -72,6 +72,7 @@ class FlashcardUseCase:
         """Export flashcards to Anki format"""
         try:
             export_service = self.container.get(ExportService)
+            # TODO: verify connxn
             file_path = export_service.export_flashcards(flashcards)
 
             return FlashcardResponse(

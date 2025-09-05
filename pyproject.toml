@@ -36,3 +36,6 @@ dev = ["pytest", "black", "flake8","pytest-asyncio>=0.21.0"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["fcg"]
+
+[tool.pytest.ini_options]
+addopts = "-m not llm"
