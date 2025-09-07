@@ -22,12 +22,8 @@ def create_app() -> FastAPI:
     container = ServiceContainer(settings)
 
     # Register services
-    container.register_factory(
-        FlashcardGeneratorService, lambda s: OpenRouterFlashcardService(s)
-    )
-    container.register_factory(
-        FlashcardRepository, lambda s: NotionFlashcardRepository(s)
-    )
+    container.register_factory(FlashcardGeneratorService, lambda s: OpenRouterFlashcardService(s))
+    container.register_factory(FlashcardRepository, lambda s: NotionFlashcardRepository(s))
     container.register_factory(ExportService, lambda s: AnkiExportService())
 
     # Create FastAPI app

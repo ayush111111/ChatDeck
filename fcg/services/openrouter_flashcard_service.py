@@ -35,12 +35,8 @@ class OpenRouterFlashcardService(FlashcardGeneratorService):
             parsed_json = json.loads(flashcards_content)
 
             # Ensure the JSON contains the "flashcards" field
-            if "flashcards" not in parsed_json or not isinstance(
-                parsed_json["flashcards"], list
-            ):
-                raise ValueError(
-                    "Invalid response format: 'flashcards' field is missing or not a list"
-                )
+            if "flashcards" not in parsed_json or not isinstance(parsed_json["flashcards"], list):
+                raise ValueError("Invalid response format: 'flashcards' field is missing or not a list")
 
             generated_cards = parsed_json["flashcards"]
 
@@ -62,7 +58,9 @@ class OpenRouterFlashcardService(FlashcardGeneratorService):
 
     def _create_flashcard_prompt(self, content: str) -> str:
         """Create the prompt for flashcard generation"""
-        return f"""Return ONLY a JSON object with a single field called "flashcards" that contains a JSON array of flashcard objects.
+        return (
+            f"""Return ONLY a JSON object with a single field called "flashcards" """
+            f"""that contains a JSON array of flashcard objects.
 Create flashcards from the following content.
 Each object in the array must have these exact fields:
 {{
@@ -93,6 +91,7 @@ Example format:
         }}
     ]
 }}"""
+        )
 
     async def _call_llm_api(self, prompt: str) -> Dict[str, Any]:
         """Make API call to OpenRouter"""
@@ -148,8 +147,5 @@ Example format:
         """Validate that a flashcard has required fields"""
         required_fields = ["question", "answer", "topic"]
         return all(
-            field in card
-            and isinstance(card[field], str)
-            and len(card[field].strip()) > 0
-            for field in required_fields
+            field in card and isinstance(card[field], str) and len(card[field].strip()) > 0 for field in required_fields
         )

@@ -41,15 +41,11 @@ class TestAnkiExportService:
     """Test cases for AnkiExportService"""
 
     @patch("urllib.request.urlopen")
-    def test_export_flashcards_success(
-        self, mock_urlopen, anki_service, sample_flashcards
-    ):
+    def test_export_flashcards_success(self, mock_urlopen, anki_service, sample_flashcards):
         """Test successful export of flashcards to Anki"""
         # Arrange
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps(
-            {"result": None, "error": None}
-        ).encode("utf-8")
+        mock_response.read.return_value = json.dumps({"result": None, "error": None}).encode("utf-8")
         mock_urlopen.return_value = mock_response
 
         # Act
@@ -83,15 +79,11 @@ class TestAnkiExportService:
         assert "Failed to export to Anki" in str(exc_info.value)
 
     @patch("urllib.request.urlopen")
-    def test_anki_api_error_response(
-        self, mock_urlopen, anki_service, sample_flashcards
-    ):
+    def test_anki_api_error_response(self, mock_urlopen, anki_service, sample_flashcards):
         """Test handling of Anki API error responses"""
         # Arrange
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps(
-            {"result": None, "error": "Deck already exists"}
-        ).encode("utf-8")
+        mock_response.read.return_value = json.dumps({"result": None, "error": "Deck already exists"}).encode("utf-8")
         mock_urlopen.return_value = mock_response
 
         # Act & Assert
@@ -105,9 +97,7 @@ class TestAnkiExportService:
         """Test creating Anki note with topic tag"""
         # Arrange
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps(
-            {"result": None, "error": None}
-        ).encode("utf-8")
+        mock_response.read.return_value = json.dumps({"result": None, "error": None}).encode("utf-8")
         mock_urlopen.return_value = mock_response
 
         card = {
@@ -136,9 +126,7 @@ class TestAnkiExportService:
         """Test creating Anki note without topic tag"""
         # Arrange
         mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps(
-            {"result": None, "error": None}
-        ).encode("utf-8")
+        mock_response.read.return_value = json.dumps({"result": None, "error": None}).encode("utf-8")
         mock_urlopen.return_value = mock_response
 
         card = {
@@ -169,9 +157,7 @@ class TestAnkiExportService:
         assert request["params"]["param2"] == "value2"
 
     @patch("urllib.request.urlopen")
-    def test_partial_failure_handling(
-        self, mock_urlopen, anki_service, sample_flashcards
-    ):
+    def test_partial_failure_handling(self, mock_urlopen, anki_service, sample_flashcards):
         """Test handling when some cards fail to be added"""
         # Arrange - First call (createDeck) succeeds, second fails, third and fourth succeed
         responses = [

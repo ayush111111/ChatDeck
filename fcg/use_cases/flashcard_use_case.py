@@ -13,9 +13,7 @@ class FlashcardUseCase:
     def __init__(self, container: ServiceContainer):
         self.container = container
 
-    async def generate_and_save_flashcards(
-        self, request: FlashcardRequest
-    ) -> FlashcardResponse:
+    async def generate_and_save_flashcards(self, request: FlashcardRequest) -> FlashcardResponse:
         """Generate flashcards and save/export them based on destination"""
         try:
             # Generate flashcards
@@ -40,13 +38,9 @@ class FlashcardUseCase:
                 )
 
         except Exception as e:
-            return FlashcardResponse(
-                status="error", message=f"Failed to process flashcards: {str(e)}"
-            )
+            return FlashcardResponse(status="error", message=f"Failed to process flashcards: {str(e)}")
 
-    async def _save_to_notion(
-        self, flashcards: List[Dict[str, Any]]
-    ) -> FlashcardResponse:
+    async def _save_to_notion(self, flashcards: List[Dict[str, Any]]) -> FlashcardResponse:
         """Save flashcards to Notion"""
         try:
             repository = self.container.get(FlashcardRepository)
@@ -59,17 +53,11 @@ class FlashcardUseCase:
                     data={"count": len(flashcards)},
                 )
             else:
-                return FlashcardResponse(
-                    status="error", message="Failed to save flashcards to Notion"
-                )
+                return FlashcardResponse(status="error", message="Failed to save flashcards to Notion")
         except Exception as e:
-            return FlashcardResponse(
-                status="error", message=f"Error saving to Notion: {str(e)}"
-            )
+            return FlashcardResponse(status="error", message=f"Error saving to Notion: {str(e)}")
 
-    async def _export_to_anki(
-        self, flashcards: List[Dict[str, Any]]
-    ) -> FlashcardResponse:
+    async def _export_to_anki(self, flashcards: List[Dict[str, Any]]) -> FlashcardResponse:
         """Export flashcards to Anki format"""
         try:
             export_service = self.container.get(ExportService)
@@ -82,13 +70,9 @@ class FlashcardUseCase:
                 data={"file_path": file_path, "count": len(flashcards)},
             )
         except Exception as e:
-            return FlashcardResponse(
-                status="error", message=f"Error exporting to Anki: {str(e)}"
-            )
+            return FlashcardResponse(status="error", message=f"Error exporting to Anki: {str(e)}")
 
-    async def get_flashcards(
-        self, filters: Dict[str, Any] = None
-    ) -> List[Dict[str, Any]]:
+    async def get_flashcards(self, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Retrieve flashcards with optional filtering"""
         try:
             repository = self.container.get(FlashcardRepository)

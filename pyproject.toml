@@ -36,3 +36,27 @@ dev = ["pytest", "black", "flake8","pytest-asyncio>=0.21.0"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["fcg"]
+
+[tool.black]
+line-length = 127
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 127

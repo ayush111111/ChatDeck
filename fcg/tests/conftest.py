@@ -59,9 +59,7 @@ def mock_export_service():
 
 
 @pytest.fixture
-def container_with_mocks(
-    mock_settings, mock_flashcard_generator, mock_repository, mock_export_service
-):
+def container_with_mocks(mock_settings, mock_flashcard_generator, mock_repository, mock_export_service):
     """Service container with mocked dependencies"""
     container = ServiceContainer(mock_settings)
     container.register_instance(FlashcardGeneratorService, mock_flashcard_generator)

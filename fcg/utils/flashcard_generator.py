@@ -174,16 +174,12 @@ async def generate_flashcards(conversation: List[ChatMessage]) -> List[dict]:
                 generated_cards = [generated_cards]
 
             if not isinstance(generated_cards, list):
-                raise ValueError(
-                    f"Expected a list of flashcards, got {type(generated_cards)}"
-                )
+                raise ValueError(f"Expected a list of flashcards, got {type(generated_cards)}")
 
             # Add UUIDs to the flashcards
             for card in generated_cards:
                 if not isinstance(card, dict):
-                    raise ValueError(
-                        f"Expected flashcard to be a dict, got {type(card)}"
-                    )
+                    raise ValueError(f"Expected flashcard to be a dict, got {type(card)}")
                 card["id"] = str(uuid.uuid4())
 
             return generated_cards

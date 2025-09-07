@@ -138,15 +138,9 @@ class AnkiExportService(ExportService):
         request_json = json.dumps(self._request(action, **params)).encode("utf-8")
 
         try:
-            response = json.load(
-                urllib.request.urlopen(
-                    urllib.request.Request(self.anki_connect_url, request_json)
-                )
-            )
+            response = json.load(urllib.request.urlopen(urllib.request.Request(self.anki_connect_url, request_json)))
         except urllib.error.URLError as e:
-            raise AnkiConnectionError(
-                "Cannot connect to Anki. Make sure Anki is running with AnkiConnect installed."
-            ) from e
+            raise AnkiConnectionError("Cannot connect to Anki. Make sure Anki is running with AnkiConnect installed.") from e
 
         if len(response) != 2:
             raise AnkiResponseError("Response has an unexpected number of fields")
