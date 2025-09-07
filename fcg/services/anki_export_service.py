@@ -101,8 +101,7 @@ class AnkiExportService(ExportService):
                         e,
                     )
 
-            return f"Successfully exported {cards_added}/{len(flashcards)}  \
-        cards to Anki deck: {deck_name}"
+            return f"Successfully exported {cards_added}/{len(flashcards)} " f"cards to Anki deck: {deck_name}"
 
         except Exception as e:
             raise ExportError(f"Failed to export to Anki: {e}") from e
