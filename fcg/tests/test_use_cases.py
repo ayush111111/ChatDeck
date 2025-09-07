@@ -1,5 +1,6 @@
 import pytest
-from fcg.models import FlashcardRequest, ChatMessage, DestinationType, ChatRole
+
+from fcg.models import ChatMessage, ChatRole, DestinationType, FlashcardRequest
 from fcg.use_cases.flashcard_use_case import FlashcardUseCase
 
 

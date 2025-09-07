@@ -1,8 +1,10 @@
-from typing import List, Dict, Any, Optional
-from notion_client import Client
-from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.config.settings import Settings
 import datetime
+from typing import Any, Dict, List, Optional
+
+from notion_client import Client
+
+from fcg.config.settings import Settings
+from fcg.interfaces.flashcard_repository import FlashcardRepository
 
 
 class NotionFlashcardRepository(FlashcardRepository):

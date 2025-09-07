@@ -1,7 +1,7 @@
 import pytest
-import pytest_asyncio
-from fcg.utils.flashcard_generator import generate_flashcards
+
 from fcg.models import ChatMessage
+from fcg.utils.flashcard_generator import generate_flashcards
 
 
 @pytest.mark.llm

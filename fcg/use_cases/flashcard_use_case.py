@@ -1,9 +1,10 @@
-from typing import List, Dict, Any
-from fcg.models import FlashcardRequest, FlashcardResponse, DestinationType
+from typing import Any, Dict, List
+
+from fcg.config.container import ServiceContainer
+from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.interfaces.export_service import ExportService
-from fcg.config.container import ServiceContainer
+from fcg.models import DestinationType, FlashcardRequest, FlashcardResponse
 
 
 class FlashcardUseCase:

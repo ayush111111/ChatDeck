@@ -1,10 +1,12 @@
-import pytest
 from unittest.mock import AsyncMock, Mock
-from fcg.config.settings import Settings
+
+import pytest
+
 from fcg.config.container import ServiceContainer
+from fcg.config.settings import Settings
+from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.interfaces.export_service import ExportService
 
 
 @pytest.fixture

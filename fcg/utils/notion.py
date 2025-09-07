@@ -1,8 +1,7 @@
 import os
+
 from dotenv import load_dotenv
 from notion_client import Client
-
-import datetime
 
 load_dotenv()
 # Replace these with your actual secrets or use environment variables

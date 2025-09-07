@@ -1,15 +1,16 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fcg.models import FlashcardRequest, FlashcardResponse
-from fcg.config.settings import Settings
+
 from fcg.config.container import ServiceContainer
-from fcg.use_cases.flashcard_use_case import FlashcardUseCase
+from fcg.config.settings import Settings
+from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.interfaces.export_service import ExportService
-from fcg.services.openrouter_flashcard_service import OpenRouterFlashcardService
+from fcg.models import FlashcardRequest, FlashcardResponse
 from fcg.repositories.notion_repository import NotionFlashcardRepository
 from fcg.services.anki_export_service import AnkiExportService
+from fcg.services.openrouter_flashcard_service import OpenRouterFlashcardService
+from fcg.use_cases.flashcard_use_case import FlashcardUseCase
 
 
 def create_app() -> FastAPI:

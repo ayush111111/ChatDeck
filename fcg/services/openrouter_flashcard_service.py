@@ -1,11 +1,13 @@
 import json
-import uuid
 import re
-from typing import List, Dict, Any
+import uuid
+from typing import Any, Dict, List
+
 import httpx
+
+from fcg.config.settings import Settings
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.models import ChatMessage
-from fcg.config.settings import Settings
 
 
 class OpenRouterFlashcardService(FlashcardGeneratorService):
@@ -65,7 +67,7 @@ Create flashcards from the following content.
 Each object in the array must have these exact fields:
 {{
     "question": "string with the question",
-    "answer": "string with the answer", 
+    "answer": "string with the answer"
     "topic": "string indicating the general subject area"
 }}
 
