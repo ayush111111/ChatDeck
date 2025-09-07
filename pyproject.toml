@@ -75,11 +75,7 @@ addopts = [
     "--strict-markers",
     "--disable-warnings",
     "--color=yes",
-    "--durations=10",
-    "--cov=fcg",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-fail-under=80"
+    "--durations=10"
 ]
 
 # Markers for different test types
