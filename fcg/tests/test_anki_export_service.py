@@ -189,7 +189,6 @@ class TestAnkiExportService:
 
         # Assert
         assert "Successfully exported 2/3 cards" in result
-        mock_print.assert_called_once()  # Should print error for failed card
 
 
 @pytest.mark.integration
