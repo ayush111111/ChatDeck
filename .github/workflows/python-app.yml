@@ -40,4 +40,4 @@ jobs:
         uv run flake8 fcg/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --jobs 1
     - name: Test with pytest
       run: |
-        uv run pytest
+        uv run pytest -m "not llm"
