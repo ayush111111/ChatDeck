@@ -72,9 +72,11 @@ class FlashcardUseCase:
         except Exception as e:
             return FlashcardResponse(status="error", message=f"Error exporting to Anki: {str(e)}")
 
-    async def get_flashcards(self, filters: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def get_flashcards(self, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Retrieve flashcards with optional filtering"""
         try:
+            if filters is None:
+                filters = {}
             repository = self.container.get(FlashcardRepository)
             return await repository.get_flashcards(filters)
         except Exception as e:
