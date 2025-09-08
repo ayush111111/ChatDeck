@@ -8,4 +8,3 @@ class ExportService(ABC):
     @abstractmethod
     def export_flashcards(self, flashcards: List[Dict[str, Any]]) -> str:
         """Export flashcards and return file path or identifier"""
-        pass

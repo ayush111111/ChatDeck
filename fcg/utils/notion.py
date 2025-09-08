@@ -14,7 +14,7 @@ notion = Client(auth=NOTION_TOKEN)
 def get_flashcard_db_id(parent_page_id):
     """Check if the flashcard database exists and return its ID."""
     search_results = notion.search(query="Flashcards")
-    for r in search_results["results"]:
+    for r in search_results["results"]:  # type: ignore
         if r["object"] == "database" and "page_id" in r["parent"] and r["parent"]["page_id"] == parent_page_id:
             return r["id"]
     return None
@@ -41,7 +41,7 @@ def create_flashcard_database(parent_page_id):
             "Topic": {"multi_select": {}},
         },
     )
-    return db["id"]
+    return db["id"]  # pyright: ignore[reportIndexIssue]
 
 
 def add_flashcard(db_id, question, answer, topic=None):
@@ -73,12 +73,12 @@ def send_to_notion(flashcards):
         )
 
 
-# Example Usage
-if __name__ == "__main__":
-    parent_page_id = os.getenv("NOTION_PAGE_ID")  # Replace with your actual page ID
-    question = "What is the capital of France?"
-    answer = "Paris"
-    topic = "asdfasfdsaf"
+# # Example Usage
+# if __name__ == "__main__":
+#     parent_page_id = os.getenv("NOTION_PAGE_ID")  # Replace with your actual page ID
+#     question = "What is the capital of France?"
+#     answer = "Paris"
+#     topic = "asdfasfdsaf"
 
-    handle_new_flashcard(parent_page_id, question, answer, topic)
-    print("Flashcard added successfully!")
+#     handle_new_flashcard(parent_page_id, question, answer, topic)
+#     print("Flashcard added successfully!")
