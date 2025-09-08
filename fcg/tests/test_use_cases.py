@@ -1,5 +1,6 @@
 import pytest
-from fcg.models import FlashcardRequest, ChatMessage, DestinationType, ChatRole
+
+from fcg.models import ChatMessage, ChatRole, DestinationType, FlashcardRequest
 from fcg.use_cases.flashcard_use_case import FlashcardUseCase
 
 
@@ -11,9 +12,7 @@ async def test_generate_and_save_flashcards_to_notion(container_with_mocks):
     request = FlashcardRequest(
         conversation=[
             ChatMessage(role=ChatRole.USER, content="What is the capital of France?"),
-            ChatMessage(
-                role=ChatRole.ASSISTANT, content="The capital of France is Paris."
-            ),
+            ChatMessage(role=ChatRole.ASSISTANT, content="The capital of France is Paris."),
         ],
         destination=DestinationType.NOTION,
     )
@@ -35,9 +34,7 @@ async def test_generate_and_export_flashcards_to_anki(container_with_mocks):
     request = FlashcardRequest(
         conversation=[
             ChatMessage(role=ChatRole.USER, content="What is the capital of France?"),
-            ChatMessage(
-                role=ChatRole.ASSISTANT, content="The capital of France is Paris."
-            ),
+            ChatMessage(role=ChatRole.ASSISTANT, content="The capital of France is Paris."),
         ],
         destination=DestinationType.ANKI,
     )
@@ -53,9 +50,7 @@ async def test_generate_and_export_flashcards_to_anki(container_with_mocks):
 
 
 @pytest.mark.asyncio
-async def test_generate_flashcards_with_empty_conversation(
-    container_with_mocks, mock_flashcard_generator
-):
+async def test_generate_flashcards_with_empty_conversation(container_with_mocks, mock_flashcard_generator):
     """Test handling of empty flashcard generation"""
     # Arrange
     mock_flashcard_generator.generate_flashcards.return_value = []

@@ -1,15 +1,13 @@
+import datetime
 import os
+
 from dotenv import load_dotenv
 from notion_client import Client
-
-import datetime
 
 load_dotenv()
 # Replace these with your actual secrets or use environment variables
 NOTION_TOKEN = os.getenv("NOTION_INTERNAL_API_KEY")  # Internal integration token
-NOTION_PAGE_ID = os.getenv(
-    "NOTION_PAGE_ID"
-)  # The ID of the page you've shared with the integration
+NOTION_PAGE_ID = os.getenv("NOTION_PAGE_ID")  # The ID of the page you've shared with the integration
 
 notion = Client(auth=NOTION_TOKEN)
 
@@ -55,9 +53,7 @@ def add_flashcard(db_id, question, answer, topic=None):
             "Answer": {"rich_text": [{"text": {"content": answer}}]},
             "Status": {"select": {"name": "Learning"}},
             "Next Review": {"date": {"start": "2025-08-13"}},
-            "Topic": (
-                {"multi_select": [{"name": topic}]} if topic else {"multi_select": []}
-            ),
+            "Topic": ({"multi_select": [{"name": topic}]} if topic else {"multi_select": []}),
         },
     )
 

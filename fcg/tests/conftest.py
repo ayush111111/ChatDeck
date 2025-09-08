@@ -1,10 +1,12 @@
-import pytest
 from unittest.mock import AsyncMock, Mock
-from fcg.config.settings import Settings
+
+import pytest
+
 from fcg.config.container import ServiceContainer
+from fcg.config.settings import Settings
+from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.interfaces.export_service import ExportService
 
 
 @pytest.fixture
@@ -57,9 +59,7 @@ def mock_export_service():
 
 
 @pytest.fixture
-def container_with_mocks(
-    mock_settings, mock_flashcard_generator, mock_repository, mock_export_service
-):
+def container_with_mocks(mock_settings, mock_flashcard_generator, mock_repository, mock_export_service):
     """Service container with mocked dependencies"""
     container = ServiceContainer(mock_settings)
     container.register_instance(FlashcardGeneratorService, mock_flashcard_generator)

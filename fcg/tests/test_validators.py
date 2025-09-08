@@ -1,5 +1,6 @@
-from fcg.models import ChatMessage, ChatRole, Flashcard
 from pydantic import ValidationError
+
+from fcg.models import ChatMessage, ChatRole, Flashcard
 
 # Test valid case
 try:
@@ -12,7 +13,7 @@ except Exception as e:
 try:
     msg = ChatMessage(role=ChatRole.USER, content="   ")
     print("✗ ERROR: Whitespace message should have failed")
-except ValidationError as e:
+except ValidationError:
     print("✓ Whitespace validation working correctly")
 
 # Test flashcard validators
@@ -26,7 +27,7 @@ except Exception as e:
 try:
     card = Flashcard(question="What is Python?", answer="   ")
     print("✗ ERROR: Whitespace answer should have failed")
-except ValidationError as e:
+except ValidationError:
     print("✓ Flashcard whitespace validation working correctly")
 
 print("All validator tests completed!")

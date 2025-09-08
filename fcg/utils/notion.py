@@ -1,15 +1,12 @@
 import os
+
 from dotenv import load_dotenv
 from notion_client import Client
-
-import datetime
 
 load_dotenv()
 # Replace these with your actual secrets or use environment variables
 NOTION_TOKEN = os.getenv("NOTION_INTERNAL_API_KEY")  # Internal integration token
-NOTION_PAGE_ID = os.getenv(
-    "NOTION_PAGE_ID"
-)  # The ID of the page you've shared with the integration
+NOTION_PAGE_ID = os.getenv("NOTION_PAGE_ID")  # The ID of the page you've shared with the integration
 
 notion = Client(auth=NOTION_TOKEN)
 
@@ -18,11 +15,7 @@ def get_flashcard_db_id(parent_page_id):
     """Check if the flashcard database exists and return its ID."""
     search_results = notion.search(query="Flashcards")
     for r in search_results["results"]:
-        if (
-            r["object"] == "database"
-            and "page_id" in r["parent"]
-            and r["parent"]["page_id"] == parent_page_id
-        ):
+        if r["object"] == "database" and "page_id" in r["parent"] and r["parent"]["page_id"] == parent_page_id:
             return r["id"]
     return None
 
@@ -59,9 +52,7 @@ def add_flashcard(db_id, question, answer, topic=None):
             "Answer": {"rich_text": [{"text": {"content": answer}}]},
             "Status": {"select": {"name": "Learning"}},
             "Next Review": {"date": {"start": "2025-08-13"}},
-            "Topic": (
-                {"multi_select": [{"name": topic}]} if topic else {"multi_select": []}
-            ),
+            "Topic": ({"multi_select": [{"name": topic}]} if topic else {"multi_select": []}),
         },
     )
 

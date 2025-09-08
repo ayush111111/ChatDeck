@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class ChatRole(str, Enum):
@@ -15,9 +16,7 @@ class ChatMessage(BaseModel):
     """Chat message with validation"""
 
     role: ChatRole
-    content: str = Field(
-        ..., min_length=1, description="Message content cannot be empty"
-    )
+    content: str = Field(..., min_length=1, description="Message content cannot be empty")
 
     @field_validator("content")
     @classmethod
@@ -37,18 +36,14 @@ class DestinationType(str, Enum):
 class FlashcardRequest(BaseModel):
     """Request to generate flashcards"""
 
-    conversation: List[ChatMessage] = Field(
-        ..., min_items=1, description="At least one message required"
-    )
+    conversation: List[ChatMessage] = Field(..., min_items=1, description="At least one message required")
     destination: DestinationType
 
     @field_validator("conversation")
     @classmethod
     def conversation_must_have_content(cls, v):
         if not any(msg.content.strip() for msg in v):
-            raise ValueError(
-                "Conversation must contain at least one message with content"
-            )
+            raise ValueError("Conversation must contain at least one message with content")
         return v
 
 

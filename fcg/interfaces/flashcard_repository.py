@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 class FlashcardRepository(ABC):
@@ -11,8 +11,6 @@ class FlashcardRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_flashcards(
-        self, filters: Dict[str, Any] = None
-    ) -> List[Dict[str, Any]]:
+    async def get_flashcards(self, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Retrieve flashcards from the storage system"""
         pass

@@ -1,8 +1,10 @@
-from typing import List, Dict, Any, Optional
-from notion_client import Client
-from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.config.settings import Settings
 import datetime
+from typing import Any, Dict, List, Optional
+
+from notion_client import Client
+
+from fcg.config.settings import Settings
+from fcg.interfaces.flashcard_repository import FlashcardRepository
 
 
 class NotionFlashcardRepository(FlashcardRepository):
@@ -32,9 +34,7 @@ class NotionFlashcardRepository(FlashcardRepository):
             print(f"Error saving flashcards to Notion: {e}")
             return False
 
-    async def get_flashcards(
-        self, filters: Dict[str, Any] = None
-    ) -> List[Dict[str, Any]]:
+    async def get_flashcards(self, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Retrieve flashcards from Notion database"""
         try:
             db_id = await self._get_database_id()
@@ -43,14 +43,9 @@ class NotionFlashcardRepository(FlashcardRepository):
 
             # Query the database
             query_filter = self._build_notion_filter(filters) if filters else None
-            response = self.client.databases.query(
-                database_id=db_id, filter=query_filter
-            )
+            response = self.client.databases.query(database_id=db_id, filter=query_filter)
 
-            return [
-                self._convert_notion_page_to_flashcard(page)
-                for page in response["results"]
-            ]
+            return [self._convert_notion_page_to_flashcard(page) for page in response["results"]]
 
         except Exception as e:
             print(f"Error retrieving flashcards from Notion: {e}")
@@ -154,10 +149,7 @@ class NotionFlashcardRepository(FlashcardRepository):
 
     def _extract_topic(self, multi_select_property: Dict[str, Any]) -> str:
         """Extract first topic from multi-select property"""
-        if (
-            "multi_select" in multi_select_property
-            and multi_select_property["multi_select"]
-        ):
+        if "multi_select" in multi_select_property and multi_select_property["multi_select"]:
             return multi_select_property["multi_select"][0]["name"]
         return ""
 

@@ -1,5 +1,6 @@
 import uuid
 
+
 def generate_apkg(flashcards):
     """
     Generate an Anki package file from the flashcards.

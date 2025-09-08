@@ -3,9 +3,7 @@ import sys
 from typing import Optional
 
 
-def setup_logging(
-    level: str = "INFO", log_file: Optional[str] = None
-) -> logging.Logger:
+def setup_logging(level: str = "INFO", log_file: Optional[str] = None) -> logging.Logger:
     """Setup application logging configuration"""
 
     # Create logger
@@ -13,9 +11,7 @@ def setup_logging(
     logger.setLevel(getattr(logging, level.upper()))
 
     # Create formatter
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)

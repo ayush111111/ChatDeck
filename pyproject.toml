@@ -36,3 +36,66 @@ dev = ["pytest", "black", "flake8","pytest-asyncio>=0.21.0"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["fcg"]
+
+[tool.black]
+line-length = 127
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 127
+
+[tool.pytest.ini_options]
+# Test discovery
+testpaths = ["fcg/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output options
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+    "--color=yes",
+    "--durations=10"
+]
+
+# Markers for different test types
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "llm: Tests that call LLM APIs (may be slow)",
+    "anki: Tests that require Anki connection",
+    "slow: Slow running tests",
+    "network: Tests that require network access"
+]
+
+# Async support
+asyncio_mode = "auto"
+
+# Minimum version
+minversion = "7.0"
+
+# Filter warnings
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]

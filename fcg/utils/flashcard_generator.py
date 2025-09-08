@@ -1,10 +1,12 @@
-import os
-import uuid
-import re
 import json
+import os
+import re
+import uuid
 from typing import List
+
 import httpx
 from dotenv import load_dotenv
+
 from fcg.models import ChatMessage
 
 load_dotenv()
@@ -100,9 +102,9 @@ def create_flashcard_prompt(content: str) -> str:
         "answer": "string with the answer",
         "topic": "string indicating the general subject area"
     }}
-    
+
     Content to process: {content}
-    
+
     Technical requirements:
     1. Response must be parseable by json.loads()
     2. No markdown formatting
@@ -111,7 +113,7 @@ def create_flashcard_prompt(content: str) -> str:
     5. No code block markers
     6. Just the raw JSON array
     7. Topic should be a single word or short phrase
-    
+
     Example format:
     [
         {{
@@ -172,16 +174,12 @@ async def generate_flashcards(conversation: List[ChatMessage]) -> List[dict]:
                 generated_cards = [generated_cards]
 
             if not isinstance(generated_cards, list):
-                raise ValueError(
-                    f"Expected a list of flashcards, got {type(generated_cards)}"
-                )
+                raise ValueError(f"Expected a list of flashcards, got {type(generated_cards)}")
 
             # Add UUIDs to the flashcards
             for card in generated_cards:
                 if not isinstance(card, dict):
-                    raise ValueError(
-                        f"Expected flashcard to be a dict, got {type(card)}"
-                    )
+                    raise ValueError(f"Expected flashcard to be a dict, got {type(card)}")
                 card["id"] = str(uuid.uuid4())
 
             return generated_cards
