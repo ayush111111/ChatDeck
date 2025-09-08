@@ -75,6 +75,8 @@ class FlashcardUseCase:
     async def get_flashcards(self, filters: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """Retrieve flashcards with optional filtering"""
         try:
+            if filters is None:
+                filters = {}
             repository = self.container.get(FlashcardRepository)
             return await repository.get_flashcards(filters)
         except Exception as e:
