@@ -203,3 +203,6 @@ _ = lm.inspect_history(n=1)
 # France
 
 # [[ ## completed ## ]]
+
+
+# using it for anki
