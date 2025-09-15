@@ -1,9 +1,12 @@
 # ChatDeck
 
-LLMs are used to learn things
+This extension creates Anki flashcards from LLM conversations.
 
-Retention after using LLMs is lower than other mediums
+## Motivation
+Though the use of flashcards has been extensively studied, very few people actually use them, possibly because of the high effort required to create them.
+Using LLMs this effort can be reduced significantly
+By plugging this extension into the pre-existing Anki ecosystem (AnkiWeb,AnkiDesktop, AnkiDroid), retaining information using flashcard on-the-go becomes easy
 
-Using flashcards to retain learned information becomes important
+## Novelty
 
-This tool creates Anki flashcards from LLM conversations
+Analyzes follow-up questions as indicators of learning priorities.

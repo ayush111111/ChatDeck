@@ -161,3 +161,34 @@ FSRS-Anki-20k — a 20k sample collection of Anki collections useful for SRS and
 Hugging Face
 
 anki-revlogs-10k — dataset with cards, revlogs and decks. Useful for extracting Q/A pairs and context.
+
+-------------
+https://www.lesswrong.com/posts/hGhBhLsgNWLCJ3g9b/creating-flashcards-with-llms
+
+> Note that people tend to overestimate their skills at creating good cards. Especially when creating cards en masse by hand, there is a strong tendency to start simplifying by focusing on the information that is easy to put in flashcards, vs. the information you actually care about, but which is hard to encode into a card. So you should probably lower your expectation of how good your cards actually are (unless you have considerable experience to back up your estimate).
+
+> Create [number of cards] concise, simple, straightforward and distinct Anki cards to study the following article, each with a front and back. Avoid repeating the content in the front on the back of the card. In particular, if the front is a question and the back an answer, avoid repeating the phrasing of the question as the initial part of the answer. Avoid explicitly referring to the author or the article in the cards, and instead treat the article as factual and independent of the author. Use the following format:
+
+    1. Front: [front section of card 1]
+    Back: [back section of card 1]
+
+    2. Front: [front section of card 2]
+    Back: [back section of card 2]
+
+    ... and so on.
+
+    Here is the article:
+
+    "[Article]"
+
+In my experience with the Rationality deck (see below), if the word count of the article is
+N, you can aim for ∼N/100 cards. In general, you should avoid (if you can) breaking the article into smaller parts, each processed independently, as the LLM will lose important context to generate the cards. The template prompt contains pieces of information that are relevant for the LLM to know:
+
+"concise, simple, straightforward": otherwise, GPT-3.5/4 has some tendency to add a lot of text to the back of the card, which goes against some flashcard design principles.
+"distinct": mainly to avoid it creating cards covering the same information.
+"Avoid repeating the content in the front on the back of the card. In particular, if the front is a question and the back an answer, avoid repeating the phrasing of the question as the initial part of the answer.": very common issue otherwise, GPT-3.5/4 defaults to adding unnecessary information to the back of the card.
+"Avoid explicitly referring to the author or the article in the cards, and instead treat the article as factual and independent of the author.": by default, it tends to not treat the information in the article at face value. It would regularly add "According to the article/author" to the front or back of the cards, which is unnecessary.
+"each with a front and back" and "Use the following format": By keeping the format consistent among cards, it is easy to post-process them with a script to add to Anki. GPT-4 always follows the template, while GPT-3.5 only does sometimes. It is possible that adding an example card to the end of the prompt would help, but I haven't checked.
+
+
+... feel free to use LaTeX to write them .. - resulting cards may require additional post-processing
