@@ -1,12 +1,15 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from fcg.config.container import ServiceContainer
 from fcg.config.settings import Settings
 from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.models import FlashcardRequest, FlashcardResponse
+from fcg.models import FlashcardRequest, FlashcardResponse, TextFlashcardRequest
 from fcg.repositories.notion_repository import NotionFlashcardRepository
 from fcg.services.anki_export_service import AnkiExportService
 from fcg.services.openrouter_flashcard_service import OpenRouterFlashcardService
@@ -36,16 +39,21 @@ def create_app() -> FastAPI:
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Content-Type", "Authorization"],
+        allow_origins=["*"],  # Allow all origins for browser extension compatibility
+        allow_credentials=False,  # Set to False when using allow_origins=["*"]
+        allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
+        allow_headers=["*"],  # Allow all headers
         expose_headers=["Content-Type"],
         max_age=600,
     )
 
     # Store container in app state
     app.state.container = container
+
+    # Mount static files
+    static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
     return app
 
@@ -63,6 +71,28 @@ async def create_flashcards(request: FlashcardRequest) -> FlashcardResponse:
 
         # Process the request
         response = await use_case.generate_and_save_flashcards(request)
+
+        # Return appropriate HTTP status
+        if response.status == "error":
+            raise HTTPException(status_code=400, detail=response.message)
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@app.post("/flashcards/from-text", response_model=FlashcardResponse)
+async def create_flashcards_from_text(request: TextFlashcardRequest) -> FlashcardResponse:
+    """Generate and save/export flashcards from text input"""
+    try:
+        # Get use case from container
+        use_case = FlashcardUseCase(app.state.container)
+
+        # Process the text request
+        response = await use_case.generate_flashcards_from_text(request)
 
         # Return appropriate HTTP status
         if response.status == "error":

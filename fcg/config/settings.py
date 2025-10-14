@@ -16,11 +16,7 @@ class Settings(BaseSettings):
     notion_page_id: Optional[str] = None
 
     # Application settings
-    cors_origins: list[str] = [
-        "http://localhost:8000",
-        "https://chat.openai.com",
-        "https://chatgpt.com",
-    ]
+    cors_origins: list[str] = ["http://localhost:8000", "https://chat.openai.com", "https://chatgpt.com", "*"]
     host: str = "0.0.0.0"
     port: int = 8000
 
