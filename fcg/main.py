@@ -6,10 +6,15 @@ from fastapi.staticfiles import StaticFiles
 
 from fcg.config.container import ServiceContainer
 from fcg.config.settings import Settings
+from fcg.services.database import db_service
+from fcg.routes.flashcard_api import router as flashcard_router
 from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.models import FlashcardRequest, FlashcardResponse, TextFlashcardRequest
+# Import from the direct models.py file to avoid circular imports
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+from models import FlashcardRequest, FlashcardResponse, TextFlashcardRequest
 from fcg.repositories.notion_repository import NotionFlashcardRepository
 from fcg.services.anki_export_service import AnkiExportService
 from fcg.services.openrouter_flashcard_service import OpenRouterFlashcardService
@@ -28,6 +33,9 @@ def create_app() -> FastAPI:
     container.register_factory(FlashcardGeneratorService, lambda s: OpenRouterFlashcardService(s))
     container.register_factory(FlashcardRepository, lambda s: NotionFlashcardRepository(s))
     container.register_factory(ExportService, lambda s: AnkiExportService())
+
+    # Initialize database
+    db_service.init_database()
 
     # Create FastAPI app
     app = FastAPI(
@@ -49,6 +57,9 @@ def create_app() -> FastAPI:
 
     # Store container in app state
     app.state.container = container
+
+    # Include API routes
+    app.include_router(flashcard_router)
 
     # Mount static files
     static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
