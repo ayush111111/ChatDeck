@@ -1,35 +1,51 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from fcg.models.flashcard import Base, Flashcard, FlashcardBatch
-from fcg.config.settings import Settings
-from typing import List, Optional, Generator
 import uuid
+from typing import Generator, List, Optional
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from fcg.config.settings import Settings
+from fcg.models.flashcard import Base, Flashcard, FlashcardBatch
 
 
 class DatabaseService:
-    """Database service for managing SQLite connection and initialization"""
-    
+    """Database service for managing SQLite/PostgreSQL connections"""
+
     def __init__(self, database_url: Optional[str] = None):
         settings = Settings()
-        self.database_url = database_url or settings.database_url
-        
-        # Create engine with SQLite-specific settings
-        self.engine = create_engine(
-            self.database_url, 
-            connect_args={"check_same_thread": False}
-        )
-        
+
+        # Build database URL based on configuration
+        if database_url:
+            self.database_url = database_url
+        elif settings.postgres_host:
+            # Use Supabase PostgreSQL (Free tier: 500MB)
+            self.database_url = (
+                f"postgresql://{settings.postgres_user}:{settings.postgres_password}@"
+                f"{settings.postgres_host}:5432/{settings.postgres_db or 'postgres'}"
+            )
+        else:
+            # Fallback to SQLite
+            self.database_url = settings.database_url
+
+        # Create engine with appropriate settings
+        if self.database_url.startswith("postgresql"):
+            # PostgreSQL settings
+            self.engine = create_engine(
+                self.database_url,
+                pool_pre_ping=True,  # Verify connections before use
+                pool_recycle=300,  # Recycle connections every 5 minutes
+            )
+        else:
+            # SQLite settings
+            self.engine = create_engine(self.database_url, connect_args={"check_same_thread": False})
+
         # Create session factory
-        self.SessionLocal = sessionmaker(
-            autocommit=False, 
-            autoflush=False, 
-            bind=self.engine
-        )
-    
+        self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+
     def init_database(self):
         """Initialize database tables"""
         Base.metadata.create_all(bind=self.engine)
-    
+
     def get_db(self) -> Generator[Session, None, None]:
         """Dependency for getting database session"""
         db = self.SessionLocal()
@@ -41,32 +57,30 @@ class DatabaseService:
 
 class FlashcardService:
     """Service for managing flashcard operations"""
-    
+
     def __init__(self, db: Session):
         self.db = db
-    
+
     def create_batch(self, user_id: str, source_url: Optional[str] = None) -> str:
         """Create a new flashcard batch and return batch_id"""
         batch_id = str(uuid.uuid4())
-        batch = FlashcardBatch(
-            user_id=user_id,
-            batch_id=batch_id,
-            source_url=source_url
-        )
+        batch = FlashcardBatch(user_id=user_id, batch_id=batch_id, source_url=source_url)
         self.db.add(batch)
         self.db.commit()
         return batch_id
-    
-    def add_flashcard(self, 
-                     user_id: str, 
-                     front: str, 
-                     back: str,
-                     batch_id: Optional[str] = None,
-                     source_url: Optional[str] = None,
-                     source_text: Optional[str] = None,
-                     deck_name: str = "Default",
-                     tags: Optional[str] = None,
-                     difficulty: Optional[str] = None) -> Flashcard:
+
+    def add_flashcard(
+        self,
+        user_id: str,
+        front: str,
+        back: str,
+        batch_id: Optional[str] = None,
+        source_url: Optional[str] = None,
+        source_text: Optional[str] = None,
+        deck_name: str = "Default",
+        tags: Optional[str] = None,
+        difficulty: Optional[str] = None,
+    ) -> Flashcard:
         """Add a new flashcard to the database"""
         flashcard = Flashcard(
             user_id=user_id,
@@ -76,34 +90,35 @@ class FlashcardService:
             source_text=source_text,
             deck_name=deck_name,
             tags=tags,
-            difficulty=difficulty
+            difficulty=difficulty,
         )
         self.db.add(flashcard)
         self.db.commit()
         self.db.refresh(flashcard)
         return flashcard
-    
+
     def get_pending_flashcards(self, user_id: str) -> List[Flashcard]:
         """Get all pending flashcards for a user"""
-        return self.db.query(Flashcard).filter(
-            Flashcard.user_id == user_id,
-            Flashcard.status == "pending"
-        ).order_by(Flashcard.created_at.desc()).all()
-    
+        return (
+            self.db.query(Flashcard)
+            .filter(Flashcard.user_id == user_id, Flashcard.status == "pending")
+            .order_by(Flashcard.created_at.desc())
+            .all()
+        )
+
     def mark_flashcards_synced(self, flashcard_ids: List[int]) -> int:
         """Mark multiple flashcards as synced"""
         from datetime import datetime
-        
-        updated_count = self.db.query(Flashcard).filter(
-            Flashcard.id.in_(flashcard_ids)
-        ).update({
-            "status": "synced",
-            "synced_at": datetime.utcnow()
-        }, synchronize_session=False)
-        
+
+        updated_count = (
+            self.db.query(Flashcard)
+            .filter(Flashcard.id.in_(flashcard_ids))
+            .update({"status": "synced", "synced_at": datetime.utcnow()}, synchronize_session=False)
+        )
+
         self.db.commit()
         return updated_count
-    
+
     def mark_flashcard_failed(self, flashcard_id: int, error_message: Optional[str] = None) -> bool:
         """Mark a flashcard as failed to sync"""
         flashcard = self.db.query(Flashcard).filter(Flashcard.id == flashcard_id).first()
@@ -113,22 +128,22 @@ class FlashcardService:
             self.db.commit()
             return True
         return False
-    
+
     def get_flashcard_stats(self, user_id: str) -> dict:
         """Get statistics for user's flashcards"""
         from sqlalchemy import func
-        
-        stats = self.db.query(
-            Flashcard.status,
-            func.count(Flashcard.id)
-        ).filter(
-            Flashcard.user_id == user_id
-        ).group_by(Flashcard.status).all()
-        
+
+        stats = (
+            self.db.query(Flashcard.status, func.count(Flashcard.id))
+            .filter(Flashcard.user_id == user_id)
+            .group_by(Flashcard.status)
+            .all()
+        )
+
         result = {"pending": 0, "synced": 0, "failed": 0}
         for status, count in stats:
             result[status] = count
-        
+
         return result
 
 
