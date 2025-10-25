@@ -4,7 +4,7 @@ from fcg.config.container import ServiceContainer
 from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.models import (
+from fcg.schemas import (
     ChatMessage,
     ChatRole,
     DestinationType,

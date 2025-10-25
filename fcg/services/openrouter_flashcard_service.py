@@ -7,7 +7,7 @@ import httpx
 
 from fcg.config.settings import Settings
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
-from fcg.models import ChatMessage
+from fcg.schemas import ChatMessage
 
 
 class OpenRouterFlashcardService(FlashcardGeneratorService):
@@ -20,6 +20,7 @@ class OpenRouterFlashcardService(FlashcardGeneratorService):
         self.api_key = settings.openrouter_api_key
         self.api_url = settings.openrouter_url
         self.model = settings.openrouter_model
+        self.max_tokens = settings.openrouter_max_tokens
 
     async def generate_flashcards(self, conversation: List[ChatMessage]) -> List[dict]:
         """Generate flashcards from conversation using OpenRouter API"""
@@ -110,7 +111,7 @@ Example format:
                 {"role": "user", "content": prompt},
             ],
             "response_format": {"type": "json_object"},
-            "max_tokens": 4000,  # Limit output tokens to avoid exceeding context window
+            "max_tokens": self.max_tokens,  # Limit output tokens to avoid exceeding context window
         }
 
         async with httpx.AsyncClient() as client:

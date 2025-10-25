@@ -7,7 +7,7 @@ from typing import List
 import httpx
 from dotenv import load_dotenv
 
-from fcg.models import ChatMessage
+from fcg.schemas import ChatMessage
 
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")

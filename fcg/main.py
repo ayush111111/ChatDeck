@@ -6,17 +6,15 @@ from fastapi.staticfiles import StaticFiles
 
 from fcg.config.container import ServiceContainer
 from fcg.config.settings import Settings
-from fcg.services.database import db_service
-from fcg.routes.flashcard_api import router as flashcard_router
 from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-# Import from the direct models.py file to avoid circular imports
-import sys
-sys.path.insert(0, os.path.dirname(__file__))
-from models import FlashcardRequest, FlashcardResponse, TextFlashcardRequest
 from fcg.repositories.notion_repository import NotionFlashcardRepository
+from fcg.routes.flashcard_api import router as flashcard_router
+from fcg.routes.flashcard_generation import router as generation_router
+from fcg.schemas import FlashcardRequest, FlashcardResponse, TextFlashcardRequest
 from fcg.services.anki_export_service import AnkiExportService
+from fcg.services.database import db_service
 from fcg.services.openrouter_flashcard_service import OpenRouterFlashcardService
 from fcg.use_cases.flashcard_use_case import FlashcardUseCase
 
@@ -37,11 +35,35 @@ def create_app() -> FastAPI:
     # Initialize database
     db_service.init_database()
 
-    # Create FastAPI app
+    # Create FastAPI app with organized tags
     app = FastAPI(
         title="Flashcard Generator API",
-        description="Generate flashcards from conversations and export to various formats",
-        version="1.0.0",
+        description="""
+        Generate flashcards from conversations and text, with database storage and sync capabilities.
+
+        **Current Architecture**: Chrome Extension → FastAPI → Database → Custom Anki Addon (pull-based sync)
+
+        **Recommended Endpoints**: Use the "Flashcards API (Database)" section for all new integrations.
+        """,
+        version="2.0.0",
+        openapi_tags=[
+            {
+                "name": "Flashcards API (Database)",
+                "description": "✅ **Recommended**: Database-first CRUD operations for flashcards. Use these endpoints for the new architecture.",
+            },
+            {
+                "name": "Flashcard Generation (LLM)",
+                "description": "✅ **Recommended**: LLM-powered flashcard generation using OpenRouter API.",
+            },
+            {
+                "name": "Health",
+                "description": "Service health and status checks.",
+            },
+            {
+                "name": "Deprecated",
+                "description": "⚠️ **Deprecated**: Legacy endpoints that will be removed. Use the Database API instead.",
+            },
+        ],
     )
 
     # Add CORS middleware
@@ -60,6 +82,7 @@ def create_app() -> FastAPI:
 
     # Include API routes
     app.include_router(flashcard_router)
+    app.include_router(generation_router)
 
     # Mount static files
     static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
@@ -73,9 +96,23 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-@app.post("/flashcards", response_model=FlashcardResponse)
+@app.post(
+    "/flashcards",
+    response_model=FlashcardResponse,
+    tags=["Deprecated"],
+    deprecated=True,
+    summary="[DEPRECATED] Generate flashcards (old endpoint)",
+)
 async def create_flashcards(request: FlashcardRequest) -> FlashcardResponse:
-    """Generate and save/export flashcards based on the request"""
+    """⚠️ **DEPRECATED**: This endpoint is deprecated and will be removed in a future version.
+
+    Use the new database API endpoints instead:
+    - `POST /api/v1/flashcards/generate` for LLM-based generation
+    - `POST /api/v1/flashcards/batch` for batch creation
+
+    This endpoint directly integrates with Anki/Notion which is no longer the recommended approach.
+    The new architecture uses a database-first approach with pull-based sync from the Anki addon.
+    """
     try:
         # Get use case from container
         use_case = FlashcardUseCase(app.state.container)
@@ -95,9 +132,23 @@ async def create_flashcards(request: FlashcardRequest) -> FlashcardResponse:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@app.post("/flashcards/from-text", response_model=FlashcardResponse)
+@app.post(
+    "/flashcards/from-text",
+    response_model=FlashcardResponse,
+    tags=["Deprecated"],
+    deprecated=True,
+    summary="[DEPRECATED] Generate flashcards from text (old endpoint)",
+)
 async def create_flashcards_from_text(request: TextFlashcardRequest) -> FlashcardResponse:
-    """Generate and save/export flashcards from text input"""
+    """⚠️ **DEPRECATED**: This endpoint is deprecated and will be removed in a future version.
+
+    Use the new database API endpoints instead:
+    - `POST /api/v1/flashcards/generate` for LLM-based text generation
+    - `POST /api/v1/flashcards/batch` for batch creation
+
+    This endpoint directly integrates with Anki/Notion which is no longer the recommended approach.
+    The new architecture uses a database-first approach with pull-based sync from the Anki addon.
+    """
     try:
         # Get use case from container
         use_case = FlashcardUseCase(app.state.container)
@@ -117,10 +168,10 @@ async def create_flashcards_from_text(request: TextFlashcardRequest) -> Flashcar
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@app.get("/health")
+@app.get("/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "flashcard-generator"}
+    """Check if the API service is healthy and running"""
+    return {"status": "healthy", "service": "flashcard-generator", "version": "2.0.0"}
 
 
 if __name__ == "__main__":
