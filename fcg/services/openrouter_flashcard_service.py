@@ -110,6 +110,7 @@ Example format:
                 {"role": "user", "content": prompt},
             ],
             "response_format": {"type": "json_object"},
+            "max_tokens": 4000,  # Limit output tokens to avoid exceeding context window
         }
 
         async with httpx.AsyncClient() as client:
