@@ -1,6 +1,6 @@
 import pytest
 
-from fcg.models import (
+from fcg.schemas import (
     ChatMessage,
     ChatRole,
     DestinationType,

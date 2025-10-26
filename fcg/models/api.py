@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import List, Optional
+
 from pydantic import BaseModel
 
 
 class FlashcardCreate(BaseModel):
     """Model for creating a new flashcard"""
+
     user_id: str
     front: str
     back: str
@@ -17,6 +19,7 @@ class FlashcardCreate(BaseModel):
 
 class FlashcardResponse(BaseModel):
     """Model for flashcard response"""
+
     id: int
     user_id: str
     front: str
@@ -36,6 +39,7 @@ class FlashcardResponse(BaseModel):
 
 class FlashcardBatchCreate(BaseModel):
     """Model for creating a flashcard batch"""
+
     user_id: str
     source_url: Optional[str] = None
     flashcards: List[FlashcardCreate]
@@ -43,12 +47,14 @@ class FlashcardBatchCreate(BaseModel):
 
 class SyncRequest(BaseModel):
     """Model for syncing flashcards"""
+
     user_id: str
     flashcard_ids: List[int]
 
 
 class UserStatsResponse(BaseModel):
     """Model for user flashcard statistics"""
+
     user_id: str
     pending: int
     synced: int

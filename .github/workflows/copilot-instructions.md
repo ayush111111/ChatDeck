@@ -9,3 +9,5 @@ This is a chrome extension.
 
 Create test cases to verify functionalities
 when creating test cases, explain for each test case, what exactly is being tested. I might suggest some additional cases as well.
+
+Be mindful of design patterns but avoid overengineering and adding complexity

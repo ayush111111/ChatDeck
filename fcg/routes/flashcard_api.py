@@ -1,17 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from typing import List
 
-from fcg.services.database import db_service, FlashcardService
-from fcg.models.api import (
-    FlashcardCreate, 
-    FlashcardResponse, 
-    FlashcardBatchCreate, 
-    SyncRequest, 
-    UserStatsResponse
-)
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/api/v1/flashcards", tags=["flashcards"])
+from fcg.models.api import (
+    FlashcardBatchCreate,
+    FlashcardCreate,
+    FlashcardResponse,
+    SyncRequest,
+    UserStatsResponse,
+)
+from fcg.services.database import FlashcardService, db_service
+
+router = APIRouter(prefix="/api/v1/flashcards", tags=["Flashcards API (Database)"])
 
 
 def get_db():
@@ -32,7 +33,7 @@ async def create_flashcard(flashcard: FlashcardCreate, db: Session = Depends(get
             source_text=flashcard.source_text,
             deck_name=flashcard.deck_name,
             tags=flashcard.tags,
-            difficulty=flashcard.difficulty
+            difficulty=flashcard.difficulty,
         )
         return FlashcardResponse.model_validate(result)
     except Exception as e:
@@ -45,7 +46,7 @@ async def create_flashcard_batch(batch: FlashcardBatchCreate, db: Session = Depe
     try:
         service = FlashcardService(db)
         batch_id = service.create_batch(batch.user_id, batch.source_url)
-        
+
         results = []
         for flashcard_data in batch.flashcards:
             result = service.add_flashcard(
@@ -56,10 +57,10 @@ async def create_flashcard_batch(batch: FlashcardBatchCreate, db: Session = Depe
                 source_text=flashcard_data.source_text,
                 deck_name=flashcard_data.deck_name,
                 tags=flashcard_data.tags,
-                difficulty=flashcard_data.difficulty
+                difficulty=flashcard_data.difficulty,
             )
             results.append(FlashcardResponse.model_validate(result))
-        
+
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create flashcard batch: {str(e)}")
@@ -85,7 +86,7 @@ async def sync_flashcards(sync_request: SyncRequest, db: Session = Depends(get_d
         return {
             "message": f"Successfully synced {updated_count} flashcards",
             "synced_count": updated_count,
-            "user_id": sync_request.user_id
+            "user_id": sync_request.user_id,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to sync flashcards: {str(e)}")
@@ -98,13 +99,13 @@ async def get_user_stats(user_id: str, db: Session = Depends(get_db)):
         service = FlashcardService(db)
         stats = service.get_flashcard_stats(user_id)
         total = sum(stats.values())
-        
+
         return UserStatsResponse(
             user_id=user_id,
             pending=stats.get("pending", 0),
             synced=stats.get("synced", 0),
             failed=stats.get("failed", 0),
-            total=total
+            total=total,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get user stats: {str(e)}")
@@ -116,10 +117,10 @@ async def mark_flashcard_failed(flashcard_id: int, db: Session = Depends(get_db)
     try:
         service = FlashcardService(db)
         success = service.mark_flashcard_failed(flashcard_id)
-        
+
         if not success:
             raise HTTPException(status_code=404, detail="Flashcard not found")
-        
+
         return {"message": f"Flashcard {flashcard_id} marked as failed"}
     except HTTPException:
         raise

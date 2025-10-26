@@ -1,5 +1,45 @@
 console.log("Flashcard extension loaded");
 
+// ============================================
+// USER ID MANAGEMENT
+// ============================================
+
+/**
+ * Generate a UUID v4
+ * Format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+ */
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
+/**
+ * Get or create user ID
+ * Stored in localStorage, generated once on first use
+ */
+const getUserId = () => {
+  let userId = localStorage.getItem('flashcard_user_id');
+
+  if (!userId) {
+    userId = generateUUID();
+    localStorage.setItem('flashcard_user_id', userId);
+    console.log('Generated new user ID:', userId);
+  }
+
+  return userId;
+};
+
+// Initialize user ID when extension loads
+const USER_ID = getUserId();
+console.log('Flashcard extension user ID:', USER_ID);
+
+// ============================================
+// MESSAGE EXTRACTION
+// ============================================
+
 const extractMessages = () => {
   const conversationTurns = document.querySelectorAll('article[data-testid^="conversation-turn"]');
   const allMessages = [];
@@ -79,17 +119,25 @@ const createButtons = () => {
       conversationBtn.disabled = true;
 
       try {
-        const response = await fetch('http://localhost:8000/flashcards', {
+        // Use new API endpoint with user_id
+        const response = await fetch('http://localhost:8000/api/v1/flashcards/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conversation, destination: 'anki' })
+          body: JSON.stringify({
+            user_id: USER_ID,  // ✅ Include user ID for isolation
+            text: conversation.map(msg => `${msg.role}: ${msg.content}`).join('\n\n'),
+            source_url: window.location.href,
+            source_title: document.title,
+            deck_name: 'ChatGPT Conversations',
+            card_count: 5
+          })
         });
 
         const data = await response.json();
 
-        if (response.ok && data.status === 'success') {
-          // Show success state
-          conversationBtn.innerText = '✅ Sent!';
+        if (response.ok && Array.isArray(data) && data.length > 0) {
+          // Show success state with count
+          conversationBtn.innerText = `✅ ${data.length} Cards Created!`;
           conversationBtn.style.backgroundColor = '#28a745';
 
           // Reset after 3 seconds
@@ -148,6 +196,26 @@ const createButtons = () => {
   };
 
   container.appendChild(textBtn);
+
+  // Settings button to show user ID
+  const settingsBtn = document.createElement('button');
+  settingsBtn.id = 'settingsButton';
+  settingsBtn.innerText = '⚙️ Settings';
+  settingsBtn.style.padding = '10px 16px';
+  settingsBtn.style.backgroundColor = '#6c757d';
+  settingsBtn.style.color = 'white';
+  settingsBtn.style.border = 'none';
+  settingsBtn.style.borderRadius = '8px';
+  settingsBtn.style.cursor = 'pointer';
+  settingsBtn.style.fontSize = '14px';
+  settingsBtn.style.fontWeight = '500';
+  settingsBtn.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+
+  settingsBtn.onclick = () => {
+    showSettingsModal();
+  };
+
+  container.appendChild(settingsBtn);
   document.body.appendChild(container);
 };
 
@@ -293,13 +361,16 @@ const showTextInputModal = () => {
       generateBtn.disabled = true;
 
       const formData = {
+        user_id: USER_ID,  // ✅ Include user ID for isolation
         text: textInput.value.trim(),
-        destination: document.getElementById('destination').value,
-        card_count: parseInt(cardCountInput.value),
-        topic: document.getElementById('topic').value.trim() || null
+        source_url: window.location.href,
+        source_title: document.title,
+        deck_name: 'Web Learning',
+        card_count: parseInt(cardCountInput.value)
       };
 
-      const response = await fetch('http://localhost:8000/flashcards/from-text', {
+      // Use new API endpoint
+      const response = await fetch('http://localhost:8000/api/v1/flashcards/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -307,9 +378,9 @@ const showTextInputModal = () => {
 
       const data = await response.json();
 
-      if (response.ok && data.status === 'success') {
-        // Show success state
-        generateBtn.textContent = '✅ Cards Sent!';
+      if (response.ok && Array.isArray(data) && data.length > 0) {
+        // Show success state with count
+        generateBtn.textContent = `✅ ${data.length} Cards Created!`;
         generateBtn.style.backgroundColor = '#28a745';
 
         // Auto-close panel after showing success
@@ -368,6 +439,155 @@ const showTextInputModal = () => {
   // Focus on textarea
   setTimeout(() => textInput.focus(), 100);
 };
+
+// ============================================
+// SETTINGS MODAL
+// ============================================
+
+const showSettingsModal = () => {
+  // Create modal overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'settings-modal-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100000;
+  `;
+
+  // Create modal content
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #333;">Flashcard Extension Settings</h2>
+
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-size: 16px; color: #666; margin: 0 0 10px 0;">Your User ID</h3>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <input
+          type="text"
+          id="user-id-display"
+          value="${USER_ID}"
+          readonly
+          style="
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            color: #333;
+          "
+        />
+        <button
+          id="copy-user-id-btn"
+          style="
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            white-space: nowrap;
+          "
+        >
+          📋 Copy
+        </button>
+      </div>
+      <p style="font-size: 12px; color: #666; margin: 10px 0 0 0; line-height: 1.4;">
+        Copy this ID and paste it into your Anki addon settings to sync flashcards.
+      </p>
+    </div>
+
+    <div style="background: #e7f3ff; border-left: 4px solid #007bff; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+      <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #0056b3;">📚 Setup Instructions</h4>
+      <ol style="margin: 0; padding-left: 20px; font-size: 13px; color: #333; line-height: 1.6;">
+        <li>Copy your User ID above</li>
+        <li>Open Anki Desktop</li>
+        <li>Go to Tools → Add-ons → Flashcard Sync → Config</li>
+        <li>Paste your User ID in the settings</li>
+        <li>Click Save and sync!</li>
+      </ol>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end;">
+      <button
+        id="close-settings-btn"
+        style="
+          padding: 10px 24px;
+          background: #6c757d;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 500;
+        "
+      >
+        Close
+      </button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Copy button functionality
+  document.getElementById('copy-user-id-btn').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(USER_ID);
+      const btn = document.getElementById('copy-user-id-btn');
+      btn.textContent = '✅ Copied!';
+      btn.style.background = '#28a745';
+      setTimeout(() => {
+        btn.textContent = '📋 Copy';
+        btn.style.background = '#007bff';
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy. Please select and copy manually.');
+    }
+  };
+
+  // Close modal
+  const closeModal = () => {
+    overlay.remove();
+  };
+
+  document.getElementById('close-settings-btn').onclick = closeModal;
+  overlay.onclick = (e) => {
+    if (e.target === overlay) closeModal();
+  };
+
+  // Close on Escape
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      closeModal();
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+};
+
+// ============================================
+// INITIALIZATION
+// ============================================
 
 // Observe DOM mutations and ensure the buttons stay
 const observer = new MutationObserver(createButtons);

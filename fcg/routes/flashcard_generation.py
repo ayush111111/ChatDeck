@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from fcg.config.settings import Settings
@@ -18,10 +18,10 @@ class GenerateFlashcardsRequest(BaseModel):
 
     user_id: str
     text: str
-    source_url: str = None
-    source_title: str = None
+    source_url: Optional[str] = None
+    source_title: Optional[str] = None
     deck_name: str = "Web Learning"
-    card_count: int = 5
+    card_count: Optional[int] = 5
 
 
 def get_db():
