@@ -18,23 +18,39 @@ const generateUUID = () => {
 
 /**
  * Get or create user ID
- * Stored in localStorage, generated once on first use
+ * Uses chrome.storage.sync for cross-domain persistence
  */
-const getUserId = () => {
-  let userId = localStorage.getItem('flashcard_user_id');
+let USER_ID = null;
 
+const getUserId = async () => {
+  if (chrome.storage && chrome.storage.sync) {
+    return new Promise((resolve) => {
+      chrome.storage.sync.get(['flashcard_user_id'], (result) => {
+        if (result.flashcard_user_id) {
+          resolve(result.flashcard_user_id);
+        } else {
+          const newId = generateUUID();
+          chrome.storage.sync.set({ flashcard_user_id: newId }, () => {
+            resolve(newId);
+          });
+        }
+      });
+    });
+  }
+  // Fallback to localStorage
+  let userId = localStorage.getItem('flashcard_user_id');
   if (!userId) {
     userId = generateUUID();
     localStorage.setItem('flashcard_user_id', userId);
-    console.log('Generated new user ID:', userId);
   }
-
   return userId;
 };
 
 // Initialize user ID when extension loads
-const USER_ID = getUserId();
-console.log('Flashcard extension user ID:', USER_ID);
+(async () => {
+  USER_ID = await getUserId();
+  console.log('Flashcard extension user ID:', USER_ID);
+})();
 
 // ============================================
 // MESSAGE EXTRACTION

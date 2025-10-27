@@ -4,6 +4,7 @@
   "version": "1.1",
   "description": "Generate Anki flashcards from ChatGPT conversations or any text content on any webpage",
   "permissions": [
+    "storage",
     "scripting",
     "activeTab"
   ],
