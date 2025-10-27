@@ -1,4 +1,5 @@
 import uuid
+from pathlib import Path
 from typing import Generator, List, Optional
 
 from sqlalchemy import create_engine
@@ -16,16 +17,22 @@ class DatabaseService:
 
         # Build database URL based on configuration
         if database_url:
+            # Explicit database URL provided
             self.database_url = database_url
-        elif settings.postgres_host:
-            # Use Supabase PostgreSQL (Free tier: 500MB)
+        elif settings.postgres_enabled and settings.postgres_host:
+            # Use PostgreSQL when enabled and host is configured
             self.database_url = (
                 f"postgresql://{settings.postgres_user}:{settings.postgres_password}@"
-                f"{settings.postgres_host}:5432/{settings.postgres_db or 'postgres'}"
+                f"{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db or 'postgres'}"
             )
-        else:
-            # Fallback to SQLite
+        elif settings.postgres_enabled and not settings.postgres_host:
+            # PostgreSQL enabled but no manual config - use DATABASE_URL environment variable
             self.database_url = settings.database_url
+        else:
+            # Use SQLite (default for local development)
+            self.database_url = settings.database_url
+            # Ensure SQLite directory exists
+            self._ensure_sqlite_directory()
 
         # Create engine with appropriate settings
         if self.database_url.startswith("postgresql"):
@@ -41,6 +48,15 @@ class DatabaseService:
 
         # Create session factory
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+
+    def _ensure_sqlite_directory(self):
+        """Ensure the directory for SQLite database exists"""
+        if self.database_url and self.database_url.startswith("sqlite:///"):
+            # Extract path from SQLite URL (e.g., sqlite:///./data/flashcards.db)
+            db_path = self.database_url.replace("sqlite:///", "")
+            db_dir = Path(db_path).parent
+            # Create directory if it doesn't exist
+            db_dir.mkdir(parents=True, exist_ok=True)
 
     def init_database(self):
         """Initialize database tables"""
