@@ -50,7 +50,7 @@ class SettingsDialog(QDialog):
 
         api_layout = QHBoxLayout()
         self.api_url_input = QLineEdit()
-        self.api_url_input.setPlaceholderText("http://localhost:8000")
+        self.api_url_input.setPlaceholderText("https://chatdeck-dev.up.railway.app")
         api_layout.addWidget(self.api_url_input)
 
         test_btn = QPushButton("Test Connection")
@@ -115,7 +115,7 @@ class SettingsDialog(QDialog):
         config = mw.addonManager.getConfig(__name__)
 
         self.user_id_input.setText(config.get("user_id", ""))
-        self.api_url_input.setText(config.get("api_url", "http://localhost:8000"))
+        self.api_url_input.setText(config.get("api_url", "https://chatdeck-dev.up.railway.app"))
         self.deck_input.setText(config.get("deck_name", "Default"))
         self.auto_sync_checkbox.setChecked(config.get("auto_sync", False))
         self.interval_spinbox.setValue(config.get("sync_interval_minutes", 5))

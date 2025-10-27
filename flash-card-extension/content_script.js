@@ -46,10 +46,33 @@ const getUserId = async () => {
   return userId;
 };
 
-// Initialize user ID when extension loads
+// ============================================
+// API CONFIGURATION
+// ============================================
+
+// Default to production, fallback to localhost for development
+let API_BASE_URL = 'https://chatdeck-dev.up.railway.app';
+
+// Try to fetch config from backend (for future flexibility)
+const loadApiConfig = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/config`);
+    if (response.ok) {
+      const config = await response.json();
+      API_BASE_URL = config.api_base_url;
+      console.log('✅ Loaded API config:', API_BASE_URL);
+    }
+  } catch (error) {
+    // Fallback to default if config fetch fails
+    console.log('Using default API URL:', API_BASE_URL);
+  }
+};
+
+// Initialize user ID and API config when extension loads
 (async () => {
   USER_ID = await getUserId();
   console.log('Flashcard extension user ID:', USER_ID);
+  await loadApiConfig();
 })();
 
 // ============================================
@@ -136,7 +159,7 @@ const createButtons = () => {
 
       try {
         // Use new API endpoint with user_id
-        const response = await fetch('http://localhost:8000/api/v1/flashcards/generate', {
+        const response = await fetch(`${API_BASE_URL}/api/v1/flashcards/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -386,7 +409,7 @@ const showTextInputModal = () => {
       };
 
       // Use new API endpoint
-      const response = await fetch('http://localhost:8000/api/v1/flashcards/generate', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/flashcards/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

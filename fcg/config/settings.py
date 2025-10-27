@@ -33,7 +33,14 @@ class Settings(BaseSettings):
     use_celery: bool = False  # Fallback flag
 
     # Application settings
-    cors_origins: list[str] = ["http://localhost:8000", "https://chat.openai.com", "https://chatgpt.com", "*"]
+    api_base_url: str = "http://localhost:8000"  # Base URL for API (update for production)
+    cors_origins: list[str] = [
+        "http://localhost:8000",
+        "https://chatdeck-dev.up.railway.app",
+        "https://chat.openai.com",
+        "https://chatgpt.com",
+        "*"
+    ]
     host: str = "0.0.0.0"
     port: int = 8000
 
@@ -57,6 +64,7 @@ class Settings(BaseSettings):
             "postgres_password": "POSTGRES_PASSWORD",
             "postgres_db": "POSTGRES_DB",
             "postgres_port": "POSTGRES_PORT",
+            "api_base_url": "API_BASE_URL",
             "celery_broker_url": "CELERY_BROKER_URL",
             "celery_result_backend": "CELERY_RESULT_BACKEND",
             "use_celery": "USE_CELERY",

@@ -168,6 +168,15 @@ async def create_flashcards_from_text(request: TextFlashcardRequest) -> Flashcar
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
+@app.get("/config", tags=["Config"])
+async def get_config():
+    """Get client configuration (API base URL for extensions)"""
+    settings = Settings()
+    return {
+        "api_base_url": settings.api_base_url
+    }
+
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Check if the API service is healthy and running"""

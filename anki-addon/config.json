@@ -1,6 +1,6 @@
 {
   "user_id": "",
-  "api_url": "http://localhost:8000",
+  "api_url": "https://chatdeck-dev.up.railway.app",
   "deck_name": "Default",
   "auto_sync": false,
   "sync_interval_minutes": 5
