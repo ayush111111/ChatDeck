@@ -28,6 +28,19 @@ env/
 *.log
 *.tmp
 
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Data directory
+data/
+
+# Development artifacts
+*.pkl
+fcg/development/
+
 # Pre-commit cache
 .pre-commit-cache/
 
