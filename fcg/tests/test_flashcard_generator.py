@@ -1,6 +1,6 @@
 import pytest
 
-from fcg.models import ChatMessage
+from fcg.schemas import ChatMessage
 from fcg.utils.flashcard_generator import generate_flashcards
 
 

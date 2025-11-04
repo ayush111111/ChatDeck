@@ -1,0 +1,12 @@
+{
+    "name": "Flashcard Sync",
+    "package": "flashcard_sync",
+    "author": "Your Name",
+    "version": "1.0.0",
+    "ankiweb_id": "",
+    "min_point_version": 50,
+    "max_point_version": 0,
+    "homepage": "https://github.com/ayush111111/flashcardgen",
+    "conflicts": [],
+    "mod": 0
+}

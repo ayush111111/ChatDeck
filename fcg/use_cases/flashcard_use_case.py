@@ -4,7 +4,14 @@ from fcg.config.container import ServiceContainer
 from fcg.interfaces.export_service import ExportService
 from fcg.interfaces.flashcard_generator_service import FlashcardGeneratorService
 from fcg.interfaces.flashcard_repository import FlashcardRepository
-from fcg.models import DestinationType, FlashcardRequest, FlashcardResponse
+from fcg.schemas import (
+    ChatMessage,
+    ChatRole,
+    DestinationType,
+    FlashcardRequest,
+    FlashcardResponse,
+    TextFlashcardRequest,
+)
 
 
 class FlashcardUseCase:
@@ -39,6 +46,52 @@ class FlashcardUseCase:
 
         except Exception as e:
             return FlashcardResponse(status="error", message=f"Failed to process flashcards: {str(e)}")
+
+    async def generate_flashcards_from_text(self, request: TextFlashcardRequest) -> FlashcardResponse:
+        """Generate flashcards from raw text input"""
+        try:
+            # Convert text to conversation format for existing generator
+            # This approach allows reuse of existing LLM service
+            system_prompt = f"""Create {request.card_count} concise, simple, straightforward and distinct Anki cards to study the following text, each with a front and back.
+Avoid repeating the content in the front on the back of the card. In particular, if the front is a question and the back an answer, avoid repeating the phrasing of the question as the initial part of the answer.
+Avoid explicitly referring to the author or the article in the cards, and instead treat the content as factual and independent of the author.
+{f'Focus on the topic: {request.topic}' if request.topic else ''}
+
+Format each card as:
+Q: [question]
+A: [answer]
+
+Text to study:"""
+
+            # Create a conversation with system message and user text
+            conversation = [
+                ChatMessage(role=ChatRole.SYSTEM, content=system_prompt),
+                ChatMessage(role=ChatRole.USER, content=request.text),
+            ]
+
+            # Generate flashcards using existing service
+            generator = self.container.get(FlashcardGeneratorService)
+            flashcards = await generator.generate_flashcards(conversation)
+
+            if not flashcards:
+                return FlashcardResponse(
+                    status="error",
+                    message="No flashcards could be generated from the provided text",
+                )
+
+            # Process based on destination
+            if request.destination == DestinationType.NOTION:
+                return await self._save_to_notion(flashcards)
+            elif request.destination == DestinationType.ANKI:
+                return await self._export_to_anki(flashcards)
+            else:
+                return FlashcardResponse(
+                    status="error",
+                    message=f"Unsupported destination: {request.destination}",
+                )
+
+        except Exception as e:
+            return FlashcardResponse(status="error", message=f"Failed to process text flashcards: {str(e)}")
 
     async def _save_to_notion(self, flashcards: List[Dict[str, Any]]) -> FlashcardResponse:
         """Save flashcards to Notion"""

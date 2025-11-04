@@ -1,13 +1,24 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT Flashcard Creator",
-  "version": "1.0",
-  "permissions": ["scripting", "activeTab"],
-  "host_permissions": ["<all_urls>"],
+  "name": "Flashcard Creator - Text & Chat to Anki",
+  "version": "1.1",
+  "description": "Generate Anki flashcards from ChatGPT conversations or any text content on any webpage",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://chat.openai.com/*", "https://chatgpt.com/*"],
-      "js": ["content_script.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content_script.js"
+      ],
       "run_at": "document_idle"
     }
   ],
