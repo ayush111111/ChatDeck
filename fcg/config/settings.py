@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     openrouter_api_key: str
     openrouter_url: str = "https://openrouter.ai/api/v1/chat/completions"
     openrouter_model: str = "qwen/qwen3-4b:free"
-    openrouter_max_tokens: int
+    openrouter_max_tokens: int = 4096
 
     # Notion API settings
     notion_api_key: Optional[str] = None
