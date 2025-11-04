@@ -9,6 +9,10 @@ dist/
 build/
 *.whl
 
+# Anki addon packages
+*.ankiaddon
+flashcard-sync.zip
+
 # VS Code settings
 .vscode/
 

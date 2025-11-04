@@ -39,7 +39,7 @@ class Settings(BaseSettings):
         "https://chatdeck-dev.up.railway.app",
         "https://chat.openai.com",
         "https://chatgpt.com",
-        "*"
+        "*",
     ]
     host: str = "0.0.0.0"
     port: int = 8000

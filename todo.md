@@ -1,5 +1,153 @@
 
-TODO
+# TODO List - Implementation Roadmap
+
+## 🚀 Immediate Priorities
+- [ ] folder is created, and udner that the deck is added
+- [ ] figure out release method (.ankiaddon)
+- [ ] Add token limit work
+- [ ] Upgrade the quality of output flashcards based on dspy experiments and the app
+- [ ] Deploy to cloud
+- [ ] Add auth, users
+- [ ] card count parameter verify
+- [ ] retry mechanisms (openrouter specifically)
+- [ ] test cases verify and extend
+- [ ] latency
+- [ ] ui revamp
+- [ ] cleanup unused files
+- [ ] create a welcome page
+
+## 🎯 DSPy Integration (Completed - Oct 2025)
+
+### Implementation Summary
+DSPy has been integrated for all LLM-based flashcard generation, replacing the previous manual prompt engineering approach.
+
+### Key Changes:
+1. **Added DSPy to dependencies** (`pyproject.toml`)
+   - `dspy>=2.5.0` - DSPy framework for LLM optimization
+   - `datasets>=2.0.0` - For future training examples (optional)
+
+2. **Created `fcg/utils/dspy_flashcard_generator.py`**
+   - **TextAnalysis Signature**: Analyzes text to identify key concepts and learning priorities
+   - **ConceptPrioritization Signature**: Ranks concepts by learning importance
+   - **FlashcardGeneration Signature**: Generates flashcards with question, answer, explanation, and topic
+   - **TextToFlashcards Module**: Main pipeline that combines all signatures using ChainOfThought
+
+3. **Updated `fcg/utils/flashcard_generator.py`**
+   - Removed manual JSON parsing and prompt engineering
+   - Now uses DSPy's TextToFlashcards module
+   - Automatic card count calculation (~1 card per 100 words, 3-10 cards)
+   - Converts DSPy Pydantic models to dict format for API compatibility
+
+### DSPy Approach vs Previous:
+- **Before**: Manual prompt with JSON parsing, error-prone formatting
+- **After**: Structured signatures with automatic prompt optimization
+- **Benefit**: Better quality, easier to maintain and iterate, reproducible
+
+### From dspy-poc Branch Observations:
+- Both class docstrings and desc parameters in output fields guide LLM generation
+- Each flashcard now has 4 fields: question, answer, explanation, topic
+- Explanation field provides detailed context (4-5 sentences) for better learning
+- Chain of Thought reasoning improves output quality
+- Text analysis step identifies confusion signals and concept hierarchy
+- Adapted from conversation-based to general text-based input
+
+### Next Steps:
+- [ ] Test with various content types (technical docs, conversations, articles)
+- [ ] Consider implementing GEPA optimizer for prompt evolution
+- [ ] Add few-shot examples using LabeledFewShot teleprompter
+- [ ] Track prompt evolution over time to measure improvements
+
+### Notes from dspy and dspy-poc Branches:
+
+#### dspy-poc Branch Findings:
+The dspy-poc branch (`fcg/development/dspy_anki.ipynb`) contains a fully working notebook with:
+
+**Architecture:**
+- **ConversationAnalysis**: Identifies user confusion signals, concept hierarchy, and follow-up intensity
+- **ConceptPrioritization**: Ranks concepts based on confusion signals and follow-ups
+- **FlashcardGeneration**: Creates cards with front, back, and explanation fields
+- **Quality Control Signatures** (commented out in production):
+  - DistinctnessChecker: Removes overlapping content
+  - RepetitionRemover: Eliminates repeated phrasing between front/back
+  - NeutralityEnforcer: Removes references to 'user', 'AI', 'conversation'
+  - CardComplexityOptimizer: Adjusts based on user comprehension level
+
+**Key Observations from Notebook:**
+- ✅ Generated 8 high-quality flashcards from GEPA algorithm conversation
+- ✅ Each card has focused question, direct answer, detailed explanation
+- ⚠️ Quality control checks were disabled - too many LLM calls caused delays
+- ⚠️ Received junk output when all verification calls ran (generated irrelevant content)
+- 💡 Both class docstrings AND desc parameters are incorporated into LLM prompts
+
+**Example Output Quality:**
+```
+Front: "What is the core similarity between traditional GAs and GEPA?"
+Back: "Both share the same evolutionary principle."
+Explanation: "Both traditional GAs and GEPA are based on the same core principles
+of evolutionary algorithms: candidate representation, fitness evaluation, selection,
+mutation & crossover, and generation iteration..."
+```
+
+#### dspy Branch Findings:
+The dspy branch contains `fcg/development/dspy_poc.py` demonstrating:
+
+**DSPy Concepts Applied:**
+1. **Signatures**: Input/output specifications that tell LM *what* to do, not *how*
+2. **Modules**: Building blocks that abstract prompting techniques (e.g., ChainOfThought)
+3. **Optimizers**: Auto-improve prompts using examples (LabeledFewShot, GEPA)
+
+**Code Example from dspy_poc.py:**
+```python
+# Basic signature
+class BasicQASignature(dspy.Signature):
+    __doc__ = """Answer questions with short factoid answers."""
+    question = dspy.InputField()
+    answer = dspy.OutputField(desc="often between 1 and 5 words")
+
+# Few-shot optimization
+from dspy.teleprompt import LabeledFewShot
+fewshot_teleprompter = LabeledFewShot(k=3)
+basic_fewshot_qa_model = fewshot_teleprompter.compile(basic_qa_model, trainset=squad_train)
+```
+
+**Why DSPy?**
+- Outperforms 20-hour expert prompt engineering by 40% (UMD research)
+- Reproducibility: Track how prompts evolve over time
+- Automatic optimization with annotated examples
+- Modules serve as learning targets for the optimizer
+
+**File Structure:**
+- `fcg/development/dspy_anki.ipynb` - Main working notebook (dspy-poc branch)
+- `fcg/development/dspy_poc.py` - Basic DSPy examples and concepts
+- `fcg/development/conversation.pkl` - Sample conversation data (7KB)
+- `fcg/development/format.html` - Anki card template with explanation toggle
+
+#### Implementation Differences:
+**dspy-poc (Conversation-focused):**
+- Analyzed user confusion signals and follow-up questions
+- Prioritized concepts based on learning engagement
+- 3-stage pipeline: analyze → prioritize → generate
+
+**Current Implementation (Text-focused):**
+- Generalized for any text input (not just conversations)
+- Same 3-stage pipeline adapted for general content
+- Automatic card count: ~1 card per 100 words (3-10 range)
+- 4 fields per card: question, answer, explanation, topic
+
+#### Best Practices from Experimentation:
+1. Keep class docstrings detailed - they guide LLM generation
+2. Use `desc` parameter in OutputFields for specific formatting
+3. ChainOfThought improves reasoning quality
+4. Quality control steps should be optional (performance trade-off)
+5. Pydantic models ensure type safety and structure
+
+## 📦 Distribution
+- [ ] Upload Anki package to add-on store
+- [ ] Upload Chrome extension to Chrome store
+
+---
+
+# Archive - Original TODO
 
 add dspy
 - make llm based code modular

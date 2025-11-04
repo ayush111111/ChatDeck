@@ -72,6 +72,9 @@ async def get_pending_flashcards(user_id: str, db: Session = Depends(get_db)):
     try:
         service = FlashcardService(db)
         flashcards = service.get_pending_flashcards(user_id)
+        print(f"[API] get_pending_flashcards: user_id={user_id}, found {len(flashcards)} pending cards")
+        if flashcards:
+            print(f"[API] Card IDs: {[fc.id for fc in flashcards]}")
         return [FlashcardResponse.model_validate(fc) for fc in flashcards]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get pending flashcards: {str(e)}")
@@ -81,14 +84,21 @@ async def get_pending_flashcards(user_id: str, db: Session = Depends(get_db)):
 async def sync_flashcards(sync_request: SyncRequest, db: Session = Depends(get_db)):
     """Mark flashcards as synced"""
     try:
+        print(f"[API] sync_flashcards: user_id={sync_request.user_id}, flashcard_ids={sync_request.flashcard_ids}")
+        print(f"[API] Number of cards to sync: {len(sync_request.flashcard_ids)}")
+
         service = FlashcardService(db)
         updated_count = service.mark_flashcards_synced(sync_request.flashcard_ids)
+
+        print(f"[API] Successfully synced {updated_count} flashcards")
+
         return {
             "message": f"Successfully synced {updated_count} flashcards",
             "synced_count": updated_count,
             "user_id": sync_request.user_id,
         }
     except Exception as e:
+        print(f"[API] Error syncing flashcards: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to sync flashcards: {str(e)}")
 
 

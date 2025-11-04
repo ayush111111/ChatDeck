@@ -22,12 +22,18 @@ def sync_flashcards(user_id: str, api_url: str, deck_name: str) -> Dict[str, Any
     """
     try:
         # 1. Fetch pending flashcards from API
-        response = requests.get(f"{api_url}/api/v1/flashcards/pending/{user_id}", timeout=10)
+        request_url = f"{api_url}/api/v1/flashcards/pending/{user_id}"
+        print(f"[Flashcard Sync] Fetching pending flashcards from: {request_url}")
+        print(f"[Flashcard Sync] User ID: {user_id}")
+
+        response = requests.get(request_url, timeout=10)
         response.raise_for_status()
         flashcards = response.json()
 
+        print(f"[Flashcard Sync] Received {len(flashcards)} pending flashcards")
+
         if not flashcards:
-            return {"success": True, "synced_count": 0}
+            return {"success": True, "synced_count": 0, "message": "No pending flashcards found"}
 
         # 2. Get the note type (Basic is default)
         model = mw.col.models.by_name("Basic")
@@ -36,8 +42,15 @@ def sync_flashcards(user_id: str, api_url: str, deck_name: str) -> Dict[str, Any
 
         # 3. Add each flashcard to Anki
         synced_ids = []
-        for card_data in flashcards:
+        failed_cards = []
+
+        print(f"[Flashcard Sync] Processing {len(flashcards)} flashcards...")
+
+        for idx, card_data in enumerate(flashcards, 1):
             try:
+                card_id = card_data.get("id")
+                print(f"[Flashcard Sync] Processing card {idx}/{len(flashcards)}: ID={card_id}")
+
                 # Get deck name from flashcard data, fallback to config default
                 card_deck_name = card_data.get("deck_name", deck_name)
                 deck_id = mw.col.decks.id(card_deck_name)
@@ -57,11 +70,16 @@ def sync_flashcards(user_id: str, api_url: str, deck_name: str) -> Dict[str, Any
 
                 # Add note to collection
                 mw.col.addNote(note)
-                synced_ids.append(card_data["id"])
+                synced_ids.append(card_id)
+                print(f"[Flashcard Sync] ✓ Successfully added card {card_id} to Anki")
 
             except Exception as e:
-                print(f"Failed to add card {card_data.get('id')}: {str(e)}")
+                error_msg = f"Failed to add card {card_data.get('id')}: {str(e)}"
+                print(f"[Flashcard Sync] ✗ {error_msg}")
+                failed_cards.append(card_data.get("id"))
                 continue
+
+        print(f"[Flashcard Sync] Summary: {len(synced_ids)} successful, {len(failed_cards)} failed")
 
         # 5. Save changes to collection
         mw.col.save()
@@ -69,24 +87,41 @@ def sync_flashcards(user_id: str, api_url: str, deck_name: str) -> Dict[str, Any
         # 6. Mark flashcards as synced in database
         if synced_ids:
             try:
-                sync_response = requests.post(
-                    f"{api_url}/api/v1/flashcards/sync", json={"user_id": user_id, "flashcard_ids": synced_ids}, timeout=10
-                )
+                sync_url = f"{api_url}/api/v1/flashcards/sync"
+                sync_payload = {"user_id": user_id, "flashcard_ids": synced_ids}
+                print(f"[Flashcard Sync] Marking {len(synced_ids)} cards as synced")
+                print(f"[Flashcard Sync] Sync URL: {sync_url}")
+                print(f"[Flashcard Sync] Payload: {sync_payload}")
+
+                sync_response = requests.post(sync_url, json=sync_payload, timeout=10)
                 sync_response.raise_for_status()
+
+                print(f"[Flashcard Sync] Successfully marked cards as synced: {sync_response.json()}")
             except Exception as e:
-                print(f"Failed to mark cards as synced: {str(e)}")
+                print(f"[Flashcard Sync] Failed to mark cards as synced: {str(e)}")
                 # Continue anyway - cards are already in Anki
 
         return {"success": True, "synced_count": len(synced_ids)}
 
-    except requests.exceptions.ConnectionError:
-        return {"success": False, "error": f"Cannot connect to API at {api_url}\n\nMake sure the server is running."}
-    except requests.exceptions.Timeout:
-        return {"success": False, "error": "Request timed out. Server may be slow or unresponsive."}
+    except requests.exceptions.ConnectionError as e:
+        error_msg = f"Cannot connect to API at {api_url}\n\nMake sure the server is running.\n\nDetails: {str(e)}"
+        print(f"[Flashcard Sync] Connection Error: {error_msg}")
+        return {"success": False, "error": error_msg}
+    except requests.exceptions.Timeout as e:
+        error_msg = f"Request timed out. Server may be slow or unresponsive.\n\nDetails: {str(e)}"
+        print(f"[Flashcard Sync] Timeout: {error_msg}")
+        return {"success": False, "error": error_msg}
     except requests.exceptions.HTTPError as e:
-        return {"success": False, "error": f"API error: {e.response.status_code}\n\n{e.response.text}"}
+        error_msg = f"API error: {e.response.status_code}\n\n{e.response.text}"
+        print(f"[Flashcard Sync] HTTP Error: {error_msg}")
+        return {"success": False, "error": error_msg}
     except Exception as e:
-        return {"success": False, "error": f"Unexpected error: {str(e)}"}
+        error_msg = f"Unexpected error: {str(e)}"
+        print(f"[Flashcard Sync] Unexpected Error: {error_msg}")
+        import traceback
+
+        print(traceback.format_exc())
+        return {"success": False, "error": error_msg}
 
 
 def test_connection(api_url: str) -> Dict[str, Any]:

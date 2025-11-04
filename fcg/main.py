@@ -172,9 +172,7 @@ async def create_flashcards_from_text(request: TextFlashcardRequest) -> Flashcar
 async def get_config():
     """Get client configuration (API base URL for extensions)"""
     settings = Settings()
-    return {
-        "api_base_url": settings.api_base_url
-    }
+    return {"api_base_url": settings.api_base_url}
 
 
 @app.get("/health", tags=["Health"])
