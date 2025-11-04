@@ -47,6 +47,22 @@ class FlashcardRequest(BaseModel):
         return v
 
 
+class TextFlashcardRequest(BaseModel):
+    """Request to generate flashcards from text input"""
+
+    text: str = Field(..., min_length=10, description="Text content to convert to flashcards")
+    destination: DestinationType
+    card_count: Optional[int] = Field(default=5, ge=1, le=50, description="Number of flashcards to generate")
+    topic: Optional[str] = Field(default=None, max_length=100, description="Optional topic for the flashcards")
+
+    @field_validator("text")
+    @classmethod
+    def text_must_not_be_whitespace(cls, v):
+        if not v.strip():
+            raise ValueError("Text content cannot be only whitespace")
+        return v.strip()
+
+
 class Flashcard(BaseModel):
     """Flashcard domain model"""
 

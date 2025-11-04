@@ -1,6 +1,12 @@
 import pytest
 
-from fcg.models import ChatMessage, ChatRole, DestinationType, FlashcardRequest
+from fcg.schemas import (
+    ChatMessage,
+    ChatRole,
+    DestinationType,
+    FlashcardRequest,
+    TextFlashcardRequest,
+)
 from fcg.use_cases.flashcard_use_case import FlashcardUseCase
 
 
@@ -85,3 +91,61 @@ async def test_notion_save_failure(container_with_mocks, mock_repository):
     # Assert
     assert response.status == "error"
     assert "Failed to save flashcards to Notion" in response.message
+
+
+@pytest.mark.asyncio
+async def test_generate_flashcards_from_text_to_anki(container_with_mocks):
+    """Test successful flashcard generation from text input for Anki export"""
+    # Arrange
+    use_case = FlashcardUseCase(container_with_mocks)
+    request = TextFlashcardRequest(
+        text="The mitochondria is the powerhouse of the cell. It produces ATP through cellular respiration.",
+        destination=DestinationType.ANKI,
+        card_count=3,
+        topic="Biology",
+    )
+
+    # Act
+    response = await use_case.generate_flashcards_from_text(request)
+
+    # Assert
+    assert response.status == "success"
+    assert "Anki" in response.message
+    assert response.data["file_path"] == "/tmp/test_flashcards.apkg"
+    assert response.data["count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_generate_flashcards_from_text_to_notion(container_with_mocks):
+    """Test successful flashcard generation from text input for Notion"""
+    # Arrange
+    use_case = FlashcardUseCase(container_with_mocks)
+    request = TextFlashcardRequest(
+        text="Python is a high-level programming language. It was created by Guido van Rossum.",
+        destination=DestinationType.NOTION,
+        card_count=2,
+    )
+
+    # Act
+    response = await use_case.generate_flashcards_from_text(request)
+
+    # Assert
+    assert response.status == "success"
+    assert "Notion" in response.message
+    assert response.data["count"] == 2
+
+
+@pytest.mark.asyncio
+async def test_generate_flashcards_from_text_with_empty_generation(container_with_mocks, mock_flashcard_generator):
+    """Test handling when no flashcards can be generated from text"""
+    # Arrange
+    mock_flashcard_generator.generate_flashcards.return_value = []
+    use_case = FlashcardUseCase(container_with_mocks)
+    request = TextFlashcardRequest(text="Some text that doesn't generate flashcards", destination=DestinationType.ANKI)
+
+    # Act
+    response = await use_case.generate_flashcards_from_text(request)
+
+    # Assert
+    assert response.status == "error"
+    assert "No flashcards could be generated from the provided text" in response.message
