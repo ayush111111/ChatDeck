@@ -1,87 +1,117 @@
+import pytest
 from pydantic import ValidationError
 
-from fcg.schemas import (
-    ChatMessage,
-    ChatRole,
-    DestinationType,
-    Flashcard,
-    TextFlashcardRequest,
-)
+from fcg.schemas import ChatMessage, ChatRole, DestinationType, Flashcard, TextFlashcardRequest
 
-# Test valid case
-try:
-    msg = ChatMessage(role=ChatRole.USER, content="Hello world")
-    print("✓ Valid message created successfully")
-except Exception as e:
-    print(f"✗ Error creating valid message: {e}")
 
-# Test whitespace-only content
-try:
-    msg = ChatMessage(role=ChatRole.USER, content="   ")
-    print("✗ ERROR: Whitespace message should have failed")
-except ValidationError:
-    print("✓ Whitespace validation working correctly")
+class TestChatMessageValidation:
+    """Test ChatMessage validation"""
 
-# Test flashcard validators
-try:
-    card = Flashcard(question="What is Python?", answer="A programming language")
-    print("✓ Valid flashcard created successfully")
-except Exception as e:
-    print(f"✗ Error creating valid flashcard: {e}")
+    def test_valid_message(self):
+        """Test creating valid ChatMessage"""
+        msg = ChatMessage(role=ChatRole.USER, content="Hello world")
+        assert msg.role == ChatRole.USER
+        assert msg.content == "Hello world"
 
-# Test flashcard with whitespace-only answer
-try:
-    card = Flashcard(question="What is Python?", answer="   ")
-    print("✗ ERROR: Whitespace answer should have failed")
-except ValidationError:
-    print("✓ Flashcard whitespace validation working correctly")
+    def test_whitespace_only_content(self):
+        """Test that whitespace-only content is rejected"""
+        with pytest.raises(ValidationError):
+            ChatMessage(role=ChatRole.USER, content="   ")
 
-# Test TextFlashcardRequest validation
-try:
-    text_request = TextFlashcardRequest(
-        text="This is a sample text with more than 10 characters for testing",
-        destination=DestinationType.ANKI,
-        card_count=5,
-        topic="Testing",
-    )
-    print("✓ Valid TextFlashcardRequest created successfully")
-except Exception as e:
-    print(f"✗ Error creating valid TextFlashcardRequest: {e}")
+    def test_empty_content(self):
+        """Test that empty content is rejected"""
+        with pytest.raises(ValidationError):
+            ChatMessage(role=ChatRole.USER, content="")
 
-# Test TextFlashcardRequest with text too short
-try:
-    text_request = TextFlashcardRequest(text="Short", destination=DestinationType.ANKI)
-    print("✗ ERROR: Short text should have failed")
-except ValidationError:
-    print("✓ TextFlashcardRequest text length validation working correctly")
 
-# Test TextFlashcardRequest with whitespace-only text
-try:
-    text_request = TextFlashcardRequest(text="                    ", destination=DestinationType.ANKI)
-    print("✗ ERROR: Whitespace text should have failed")
-except ValidationError:
-    print("✓ TextFlashcardRequest whitespace validation working correctly")
+class TestFlashcardValidation:
+    """Test Flashcard validation"""
 
-# Test TextFlashcardRequest with invalid card count
-try:
-    text_request = TextFlashcardRequest(
-        text="This is a valid text with more than 10 characters",
-        destination=DestinationType.ANKI,
-        card_count=100,  # Exceeds maximum of 50
-    )
-    print("✗ ERROR: Card count too high should have failed")
-except ValidationError:
-    print("✓ TextFlashcardRequest card count validation working correctly")
+    def test_valid_flashcard(self):
+        """Test creating valid flashcard"""
+        card = Flashcard(question="What is Python?", answer="A programming language")
+        assert card.question == "What is Python?"
+        assert card.answer == "A programming language"
 
-# Test TextFlashcardRequest with default values
-try:
-    text_request = TextFlashcardRequest(
-        text="This is a valid text with more than 10 characters", destination=DestinationType.ANKI
-    )
-    assert text_request.card_count == 5  # Default value
-    assert text_request.topic is None  # Default value
-    print("✓ TextFlashcardRequest default values working correctly")
-except Exception as e:
-    print(f"✗ Error with TextFlashcardRequest defaults: {e}")
+    def test_whitespace_only_question(self):
+        """Test that whitespace-only question is rejected"""
+        with pytest.raises(ValidationError):
+            Flashcard(question="   ", answer="Some answer")
 
-print("All validator tests completed!")
+    def test_whitespace_only_answer(self):
+        """Test that whitespace-only answer is rejected"""
+        with pytest.raises(ValidationError):
+            Flashcard(question="What is Python?", answer="   ")
+
+    def test_empty_question(self):
+        """Test that empty question is rejected"""
+        with pytest.raises(ValidationError):
+            Flashcard(question="", answer="Some answer")
+
+    def test_empty_answer(self):
+        """Test that empty answer is rejected"""
+        with pytest.raises(ValidationError):
+            Flashcard(question="What is Python?", answer="")
+
+
+class TestTextFlashcardRequestValidation:
+    """Test TextFlashcardRequest validation"""
+
+    def test_valid_request(self):
+        """Test creating valid TextFlashcardRequest"""
+        text_request = TextFlashcardRequest(
+            text="This is a sample text with more than 10 characters for testing",
+            destination=DestinationType.ANKI,
+            card_count=5,
+            topic="Testing",
+        )
+        assert text_request.text == "This is a sample text with more than 10 characters for testing"
+        assert text_request.destination == DestinationType.ANKI
+        assert text_request.card_count == 5
+        assert text_request.topic == "Testing"
+
+    def test_text_too_short(self):
+        """Test that text shorter than 10 characters is rejected"""
+        with pytest.raises(ValidationError):
+            TextFlashcardRequest(text="Short", destination=DestinationType.ANKI)
+
+    def test_whitespace_only_text(self):
+        """Test that whitespace-only text is rejected"""
+        with pytest.raises(ValidationError):
+            TextFlashcardRequest(text="                    ", destination=DestinationType.ANKI)
+
+    def test_card_count_too_high(self):
+        """Test that card count above 50 is rejected"""
+        with pytest.raises(ValidationError):
+            TextFlashcardRequest(
+                text="This is a valid text with more than 10 characters",
+                destination=DestinationType.ANKI,
+                card_count=100,
+            )
+
+    def test_card_count_too_low(self):
+        """Test that card count below 1 is rejected"""
+        with pytest.raises(ValidationError):
+            TextFlashcardRequest(
+                text="This is a valid text with more than 10 characters",
+                destination=DestinationType.ANKI,
+                card_count=0,
+            )
+
+    def test_default_values(self):
+        """Test that default values are applied correctly"""
+        text_request = TextFlashcardRequest(
+            text="This is a valid text with more than 10 characters", destination=DestinationType.ANKI
+        )
+        assert text_request.card_count == 5  # Default value
+        assert text_request.topic is None  # Default value
+
+    def test_notion_destination(self):
+        """Test creating request with Notion destination"""
+        text_request = TextFlashcardRequest(
+            text="This is a valid text with more than 10 characters",
+            destination=DestinationType.NOTION,
+            card_count=3,
+        )
+        assert text_request.destination == DestinationType.NOTION
+        assert text_request.card_count == 3

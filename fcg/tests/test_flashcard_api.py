@@ -3,9 +3,7 @@ import tempfile
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 
-from fcg.main import create_app
 from fcg.models.flashcard import Base
 
 
@@ -27,17 +25,35 @@ def temp_db_url():
 @pytest.fixture
 def test_app(temp_db_url, monkeypatch):
     """Create FastAPI test client with temporary database"""
-    # Override database URL in settings
+    # Override database URL in settings BEFORE importing create_app
+    # This ensures the global db_service uses the temp database
     monkeypatch.setenv("DATABASE_URL", temp_db_url)
 
-    # Create app
+    # Import here to get fresh app with new DATABASE_URL
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from fcg.main import create_app
+
+    # Reinitialize the global db_service with temp database
+    from fcg.services.database import db_service
+
+    # Recreate engine and session with temp database
+    db_service.database_url = temp_db_url
+    db_service.engine = create_engine(temp_db_url, connect_args={"check_same_thread": False})
+    db_service.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=db_service.engine)
+
+    # Initialize database tables using the db_service engine
+    Base.metadata.create_all(bind=db_service.engine)
+
+    # Create app (which will use the already-configured db_service)
     app = create_app()
 
-    # Initialize database
-    engine = create_engine(temp_db_url, connect_args={"check_same_thread": False})
-    Base.metadata.create_all(bind=engine)
+    yield app
 
-    return app
+    # Clean up database tables after each test
+    Base.metadata.drop_all(bind=db_service.engine)
+    db_service.engine.dispose()
 
 
 @pytest.fixture
@@ -166,6 +182,13 @@ class TestFlashcardAPI:
             "/api/v1/flashcards/", json={"user_id": user_id, "front": "Stats Question 3", "back": "Stats Answer 3"}
         )
 
+        # Verify all flashcards were created
+        assert flashcard1_response.status_code == 200
+        assert flashcard2_response.status_code == 200
+        assert flashcard3_response.status_code == 200
+
+        flashcard3_id = flashcard3_response.json()["id"]
+
         # Sync one flashcard
         sync_data = {"user_id": user_id, "flashcard_ids": [flashcard1_response.json()["id"]]}
         client.post("/api/v1/flashcards/sync", json=sync_data)
@@ -181,8 +204,15 @@ class TestFlashcardAPI:
         data = response.json()
 
         assert data["user_id"] == user_id
-        assert data["pending"] == 1
-        assert data["synced"] == 1
+        assert data["pending"] == 1  # flashcard3 remains pending
+        assert data["synced"] == 1  # flashcard1 was synced
+        assert data["failed"] == 1  # flashcard2 was marked failed
+
+        # Verify flashcard3 is still pending
+        pending_response = client.get(f"/api/v1/flashcards/pending/{user_id}")
+        pending_cards = pending_response.json()
+        assert len(pending_cards) == 1
+        assert pending_cards[0]["id"] == flashcard3_id
         assert data["failed"] == 1
         assert data["total"] == 3
 

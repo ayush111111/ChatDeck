@@ -1,11 +1,14 @@
+import gc
 import os
 import tempfile
+import time
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 
-from fcg.main import create_app
+# Defer importing create_app until after we set DATABASE_URL in the fixture
+# so that the global DatabaseService picks up the correct database URL.
 from fcg.models.flashcard import Base
 
 
@@ -21,16 +24,44 @@ def integration_client():
     # Set environment variable for database URL
     os.environ["DATABASE_URL"] = db_url
 
-    # Create app and initialize database
-    app = create_app()
-    engine = create_engine(db_url, connect_args={"check_same_thread": False})
-    Base.metadata.create_all(bind=engine)
+    # Import create_app after setting DATABASE_URL so the application
+    # uses the temporary SQLite database for tests instead of the
+    # default local database.
+    from sqlalchemy.orm import sessionmaker
 
+    from fcg.main import create_app
+    from fcg.services.database import db_service
+
+    # Reinitialize the global db_service with temp database
+    db_service.database_url = db_url
+    db_service.engine = create_engine(db_url, connect_args={"check_same_thread": False})
+    db_service.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=db_service.engine)
+
+    # Initialize database tables using the db_service engine
+    Base.metadata.create_all(bind=db_service.engine)
+
+    # Create app (which will use the already-configured db_service)
+    app = create_app()
     client = TestClient(app)
 
     yield client
 
-    # Cleanup
+    # Explicitly close the test client
+    client.close()
+
+    # Clean up database tables (drop all data)
+    Base.metadata.drop_all(bind=db_service.engine)
+    db_service.engine.dispose()
+
+    # Force garbage collection to release file handles
+    del client
+    del app
+    gc.collect()
+
+    # Small delay to ensure Windows releases the file handle
+    time.sleep(0.1)
+
+    # Cleanup database file
     if os.path.exists(db_path):
         os.unlink(db_path)
 
@@ -152,7 +183,7 @@ class TestCompleteFlashcardFlow:
         }
         bob_response = integration_client.post("/api/v1/flashcards/batch", json=bob_flashcards)
         assert bob_response.status_code == 200
-        bob_fcs = bob_response.json()
+        _ = bob_response.json()
 
         # Verify Alice can only see her flashcards
         alice_pending = integration_client.get(f"/api/v1/flashcards/pending/{user_alice}")

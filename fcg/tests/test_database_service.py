@@ -104,7 +104,12 @@ class TestFlashcardService:
         # Create multiple flashcards
         flashcard1 = flashcard_service.add_flashcard(user_id, "Front 1", "Back 1")
         flashcard2 = flashcard_service.add_flashcard(user_id, "Front 2", "Back 2")
-        flashcard3 = flashcard_service.add_flashcard("other_user", "Front 3", "Back 3")
+        other_user_flashcard = flashcard_service.add_flashcard("other_user", "Front 3", "Back 3")
+
+        # Verify flashcards created
+        assert flashcard1.id is not None
+        assert flashcard2.id is not None
+        assert other_user_flashcard.id is not None
 
         # Mark one as synced
         flashcard1.status = "synced"
@@ -115,6 +120,9 @@ class TestFlashcardService:
         assert len(pending) == 1
         assert pending[0].id == flashcard2.id
         assert pending[0].front == "Front 2"
+
+        # Verify other user's flashcard is not included
+        assert other_user_flashcard.id not in [fc.id for fc in pending]
 
     def test_mark_flashcards_synced(self, flashcard_service, db_session):
         """Test marking flashcards as synced"""
@@ -169,17 +177,31 @@ class TestFlashcardService:
         flashcard3 = flashcard_service.add_flashcard(user_id, "Front 3", "Back 3")
         flashcard4 = flashcard_service.add_flashcard("other_user", "Front 4", "Back 4")
 
+        # Verify all flashcards were created
+        assert flashcard1.id is not None
+        assert flashcard2.id is not None
+        assert flashcard3.id is not None
+        assert flashcard4.id is not None
+
         # Update statuses
         flashcard1.status = "synced"
         flashcard2.status = "failed"
         # flashcard3 remains "pending"
+        # flashcard4 is for other_user, should not affect test_user_123's stats
         db_session.commit()
 
         stats = flashcard_service.get_flashcard_stats(user_id)
 
-        assert stats["pending"] == 1
-        assert stats["synced"] == 1
-        assert stats["failed"] == 1
+        assert stats["pending"] == 1  # flashcard3
+        assert stats["synced"] == 1  # flashcard1
+        assert stats["failed"] == 1  # flashcard2
+
+        # Verify flashcard3 is the pending one
+        assert flashcard3.status == "pending"
+
+        # Verify other_user's flashcard doesn't affect test_user_123's stats
+        other_user_stats = flashcard_service.get_flashcard_stats("other_user")
+        assert other_user_stats["pending"] == 1  # flashcard4
 
     def test_get_flashcard_stats_empty(self, flashcard_service):
         """Test getting stats for user with no flashcards"""

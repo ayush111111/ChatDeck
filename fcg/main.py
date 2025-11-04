@@ -89,6 +89,18 @@ def create_app() -> FastAPI:
     if os.path.exists(static_dir):
         app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+    # Health check endpoint
+    @app.get("/health", tags=["Health"])
+    async def health_check():
+        """Check if the API service is healthy and running"""
+        return {"status": "healthy", "service": "flashcard-generator", "version": "2.0.0"}
+
+    # Config endpoint
+    @app.get("/config", tags=["Config"])
+    async def get_config():
+        """Get client configuration (API base URL for extensions)"""
+        return {"api_base_url": settings.api_base_url}
+
     return app
 
 
@@ -166,19 +178,6 @@ async def create_flashcards_from_text(request: TextFlashcardRequest) -> Flashcar
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-
-@app.get("/config", tags=["Config"])
-async def get_config():
-    """Get client configuration (API base URL for extensions)"""
-    settings = Settings()
-    return {"api_base_url": settings.api_base_url}
-
-
-@app.get("/health", tags=["Health"])
-async def health_check():
-    """Check if the API service is healthy and running"""
-    return {"status": "healthy", "service": "flashcard-generator", "version": "2.0.0"}
 
 
 if __name__ == "__main__":
