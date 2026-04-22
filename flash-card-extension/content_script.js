@@ -625,6 +625,135 @@ const showSettingsModal = () => {
 };
 
 // ============================================
+// HIGHLIGHT CAPTURE
+// ============================================
+
+let highlightBtn = null;
+
+/**
+ * Walk up the DOM from the selection to find a meaningful block of context.
+ * Returns up to 2000 chars of surrounding text.
+ */
+const getSourceContext = (selection) => {
+  const range = selection.getRangeAt(0);
+  let node = range.commonAncestorContainer;
+  if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+
+  const blockTags = new Set(['P', 'DIV', 'SECTION', 'ARTICLE', 'BLOCKQUOTE', 'LI', 'TD']);
+  while (node && node !== document.body) {
+    if (blockTags.has(node.tagName) && node.innerText && node.innerText.length > 80) {
+      return node.innerText.trim().slice(0, 2000);
+    }
+    node = node.parentNode;
+  }
+  return document.body.innerText.trim().slice(0, 2000);
+};
+
+const removeHighlightBtn = () => {
+  if (highlightBtn) {
+    highlightBtn.remove();
+    highlightBtn = null;
+  }
+};
+
+document.addEventListener('mouseup', (e) => {
+  // Don't trigger inside our own UI
+  if (e.target.closest('#text-flashcard-panel') ||
+      e.target.closest('#flashcard-buttons-container') ||
+      e.target.closest('#highlight-card-btn')) return;
+
+  removeHighlightBtn();
+
+  const selection = window.getSelection();
+  const selectedText = selection ? selection.toString().trim() : '';
+  if (selectedText.length < 20) return;
+
+  // Capture context before the selection can be cleared
+  const range = selection.getRangeAt(0).cloneRange();
+  const rect = range.getBoundingClientRect();
+  const sourceContext = getSourceContext(selection);
+
+  highlightBtn = document.createElement('button');
+  highlightBtn.id = 'highlight-card-btn';
+  highlightBtn.textContent = '✨ → Card';
+  highlightBtn.style.cssText = `
+    position: fixed;
+    top: ${Math.max(8, rect.top - 44)}px;
+    left: ${Math.max(8, rect.left + rect.width / 2 - 52)}px;
+    z-index: 99999;
+    background: #6c35de;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.28);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    white-space: nowrap;
+    transition: background 0.15s;
+  `;
+  highlightBtn.onmouseenter = () => { highlightBtn.style.background = '#5929c4'; };
+  highlightBtn.onmouseleave = () => { highlightBtn.style.background = '#6c35de'; };
+
+  highlightBtn.onclick = async (clickEvent) => {
+    clickEvent.stopPropagation();
+    const originalText = highlightBtn.textContent;
+    highlightBtn.textContent = '⏳ Generating...';
+    highlightBtn.disabled = true;
+    highlightBtn.style.background = '#6c757d';
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/flashcards/from-highlight`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: USER_ID,
+          highlight: selectedText,
+          source_context: sourceContext,
+          source_url: window.location.href,
+          source_title: document.title,
+          deck_name: 'Highlights',
+        }),
+      });
+
+      if (response.ok) {
+        highlightBtn.textContent = '✅ Card saved!';
+        highlightBtn.style.background = '#28a745';
+        setTimeout(removeHighlightBtn, 2000);
+      } else {
+        highlightBtn.textContent = '❌ Failed';
+        highlightBtn.style.background = '#dc3545';
+        setTimeout(() => {
+          highlightBtn.textContent = originalText;
+          highlightBtn.style.background = '#6c35de';
+          highlightBtn.disabled = false;
+        }, 2500);
+      }
+    } catch (err) {
+      console.error('Highlight card error:', err);
+      highlightBtn.textContent = '❌ No Connection';
+      highlightBtn.style.background = '#dc3545';
+      setTimeout(() => {
+        highlightBtn.textContent = originalText;
+        highlightBtn.style.background = '#6c35de';
+        highlightBtn.disabled = false;
+      }, 2500);
+    }
+  };
+
+  document.body.appendChild(highlightBtn);
+});
+
+// Dismiss the highlight button when the user clicks elsewhere
+document.addEventListener('mousedown', (e) => {
+  if (highlightBtn && !highlightBtn.contains(e.target)) {
+    removeHighlightBtn();
+  }
+});
+
+// ============================================
 // INITIALIZATION
 // ============================================
 
